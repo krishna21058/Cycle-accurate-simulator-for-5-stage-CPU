@@ -1,9 +1,12 @@
 import sys
 
-input = sys.stdin.read().split("\n")[:-1]
+input = input()
+
 instructions = []
-for i in input:
-    instructions.append(i.split())
+
+inst=input.upper().split()
+instructions.append(inst)
+print(instructions)
 
 register_dict = {
     "R0":"00000",
@@ -110,22 +113,146 @@ type_dict={
     "AND": "R",
 }
 
+funct3_dict={
+    "BEQ":"000",
+    "BNE":"001",
+    "BLT":"100",
+    "BGE":"101",
+    "BLTU":"110",
+    "BGEU":"111",
+    "LB":"000",
+    "LH":"001",
+    "LW":"010",
+    "LBU":"100",
+    "LHU":"101",
+    "SB":"000",
+    "SW":"010",
+    "SH":"001",
+    "ADDI":"000",
+    "SLTI":"010",
+    "SLTIU":"011",
+    "XORI":"100",
+    "ORI":"110",
+    "ANDI":"111",
+    "SLLI":"001",
+    "SRLI":"101",
+    "SRAI":"101",
+    "ADD":"000",
+    "SUB":"000",
+    "SLL":"001",
+    "SLT":"010",
+    "SLTU":"011",
+    "XOR":"100",
+    "SRL":"101",
+    "SRA":"101",
+    "OR":"110",
+    "AND":"111" 
+}
+
 def main(instructions):
     for i in instructions:
         if(type_dict[i[0]]=="U"):
-            U_type(i)
+            print(U_type(i))
         elif(type_dict[i[0]]=="UJ"):
-            UJ_type(i)
+            print(UJ_type(i))
         elif(type_dict[i[0]]=="I"):
-            I_type(i)
+            print("I")
+            print(I_type(i))
         elif(type_dict[i[0]]=="R"):
-            R_type(i)
+            print(R_type(i))
         elif(type_dict[i[0]]=="S"):
-            S_type(i)
+            print(S_type(i))
         elif(type_dict[i[0]]=="SB"):
-            SB_type(i)
+            print(SB_type(i))
         
-# def U_type(i):
+
+def U_type(i):
+    assert len(i) == 3, "Wrong Instruction"
+    assert i[0]=="LUI" or i[0]=="AUIPC", "Wrong Instruction"
+    assert i[1] in register_dict, "Wrong Instruction"
+    if (i[0]=="LUI"):
+        opcode = "0110111"
+    elif (i[0]=="AUIPC"):
+        opcode = "0010111"
+    rd = register_dict[i[1]]
+    imm = bin(i[2]).replace("0b", "") 
+    ans = imm+rd+opcode
+    return ans
 
 
+def UJ_type(i):
+    assert len(i) == 3, "Wrong Instruction"
+    assert i[0]=="JAL", "Wrong Instruction"
+    assert i[1] in register_dict, "Wrong Instruction"
+    inst=""
+    for it in i:
+        inst+=it
+    opcode = "1101111"
+    rd = register_dict[i[1]]
+    imm = format(int(i[3]),"012b")
+    imm=imm[::-1]
+    ans=imm[19]+imm[9::-1]+imm[10]+imm[18:11:-1]+" "+rd+" "+opcode
+    ans = imm+rd+opcode 
+    return ans
 
+
+def S_type(i):
+    opcode = "0100011"
+    inst=""
+
+    func3=funct3_dict[i[0]]+" "
+    rs1 = register_dict[i[1]]+" "
+    rs2 = register_dict[i[2]]+" "
+    for it in i:
+        inst+=it
+    imm1 = format(int(i[3]), "012b")+" "
+    imm1=imm1[::-1]
+    ans=imm1[11:4:-1]+" "+rs2+rs1+func3+imm1[4::-1]+" "+opcode
+    return ans
+
+
+def I_type(i):
+    opcode = (
+        "1100111"
+        if i[0] == "JALR"
+        else "0000011"
+        if i[0] in ["LB", "LH", "LW", "LBU", "LHU"]
+        else "0010011"
+    )
+    rd = register_dict[i[1]]+" "
+    rs1 = register_dict[i[2]]+" "
+    func3=funct3_dict[i[0]]+" "
+    imm = format(int(i[3]), "012b")+" "
+    ans=imm+rs1+func3+rd+opcode
+    return ans
+
+def SB_type(i):
+    opcode = "1100011"
+    rs1 = register_dict[i[1]]
+    rs2 = register_dict[i[2]]
+    funct3 = funct3_dict[i[0]]
+    imm = format(int(i[3]),"012b")
+    imm=imm[::-1]
+    ans=imm[9:3:-1]+" "+imm[11]+" "+rs2+" "+rs1+" "+funct3+" "+imm[3::-1]+" "+imm[10]+" "+opcode
+    return ans
+
+
+def R_type(instruction):
+    rd=register_dict[instruction[1]]+" "
+    rs1=register_dict[instruction[2]]+" "
+    funct3=funct3_dict[instruction[0]]+" "
+    if instruction[0] in ["SLLI", "SRLI", "SRAI"]:
+        opcode="0010011"
+        shamt = format(int(instruction[3]), "05b")
+        rs2=shamt
+    else:
+        opcode="0110011"
+        rs2=register_dict[instruction[2]]
+    if instruction[0] in ["SRAI","SUB","SRA"]:
+        imm_at_end="0100000"
+    else:
+        imm_at_end="0000000"
+    
+    return(imm_at_end+" "+rs2+rs1+funct3+rd+" "+opcode)
+
+main(instructions)
