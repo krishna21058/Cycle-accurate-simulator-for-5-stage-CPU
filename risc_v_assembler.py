@@ -189,7 +189,24 @@ def UJ_type(i):
         inst+=it
     opcode = "1101111"
     rd = register_dict[i[1]]
-    imm = format(int(i[3]),"012b")
+    val=int(i[3])
+    imm = bin(val)[2:].zfill(12) 
+    if(val<0):
+        abs_value = abs(val)
+        imm = bin(abs_value)[2:].zfill(12)
+        inverted_binary = ''.join('1' if bit == '0' else '0' for bit in imm)
+        
+        # Add 1 to the inverted binary to get the 2's complement representation.
+        carry = 1
+        result = []
+        for bit in reversed(inverted_binary):
+            if bit == '0':
+                result.insert(0, str(carry))
+                carry = 0
+            else:
+                result.insert(0, '1' if carry == 0 else '0')
+        
+        imm = ''.join(result)
     imm=imm[::-1]
     ans=imm[19]+imm[9::-1]+imm[10]+imm[18:11:-1]+" "+rd+" "+opcode
     ans = imm+rd+opcode 
@@ -205,9 +222,26 @@ def S_type(i):
     rs2 = register_dict[i[2]]+" "
     for it in i:
         inst+=it
-    imm1 = format(int(i[3]), "012b")+" "
-    imm1=imm1[::-1]
-    ans=imm1[11:4:-1]+" "+rs2+rs1+func3+imm1[4::-1]+" "+opcode
+    val=int(i[3])
+    imm = bin(val)[2:].zfill(12) 
+    if(val<0):
+        abs_value = abs(val)
+        imm = bin(abs_value)[2:].zfill(12)
+        inverted_binary = ''.join('1' if bit == '0' else '0' for bit in imm)
+        
+        # Add 1 to the inverted binary to get the 2's complement representation.
+        carry = 1
+        result = []
+        for bit in reversed(inverted_binary):
+            if bit == '0':
+                result.insert(0, str(carry))
+                carry = 0
+            else:
+                result.insert(0, '1' if carry == 0 else '0')
+        
+        imm = ''.join(result)
+    
+    ans=imm[0:7]+" "+rs2+rs1+func3+imm[7:12]+" "+opcode
     return ans
 
 
@@ -222,8 +256,25 @@ def I_type(i):
     rd = register_dict[i[1]]+" "
     rs1 = register_dict[i[2]]+" "
     func3=funct3_dict[i[0]]+" "
-    imm = format(int(i[3]), "012b")+" "
-    ans=imm+rs1+func3+rd+opcode
+    val=int(i[3])
+    imm = bin(val)[2:].zfill(12) 
+    if(val<0):
+        abs_value = abs(val)
+        imm = bin(abs_value)[2:].zfill(12)
+        inverted_binary = ''.join('1' if bit == '0' else '0' for bit in imm)
+        
+        # Add 1 to the inverted binary to get the 2's complement representation.
+        carry = 1
+        result = []
+        for bit in reversed(inverted_binary):
+            if bit == '0':
+                result.insert(0, str(carry))
+                carry = 0
+            else:
+                result.insert(0, '1' if carry == 0 else '0')
+        
+        imm = ''.join(result)
+    ans=imm + " " + rs1+func3+rd+opcode
     return ans
 
 def SB_type(i):
@@ -231,9 +282,27 @@ def SB_type(i):
     rs1 = register_dict[i[1]]
     rs2 = register_dict[i[2]]
     funct3 = funct3_dict[i[0]]
-    imm = format(int(i[3]),"012b")
+    val=int(i[3])
+    imm = bin(val)[2:].zfill(12) 
+    if(val<0):
+        abs_value = abs(val)
+        imm = bin(abs_value)[2:].zfill(12)
+        inverted_binary = ''.join('1' if bit == '0' else '0' for bit in imm)
+        
+        # Add 1 to the inverted binary to get the 2's complement representation.
+        carry = 1
+        result = []
+        for bit in reversed(inverted_binary):
+            if bit == '0':
+                result.insert(0, str(carry))
+                carry = 0
+            else:
+                result.insert(0, '1' if carry == 0 else '0')
+        
+        imm = ''.join(result)
+
     imm=imm[::-1]
-    ans=imm[9:3:-1]+" "+imm[11]+" "+rs2+" "+rs1+" "+funct3+" "+imm[3::-1]+" "+imm[10]+" "+opcode
+    ans=imm[11]+ " " + imm[9:3:-1] +" "+rs2+" "+rs1+" "+funct3+" "+imm[3::-1]+" "+imm[10]+" "+opcode
     return ans
 
 
@@ -247,12 +316,12 @@ def R_type(instruction):
         rs2=shamt
     else:
         opcode="0110011"
-        rs2=register_dict[instruction[2]]
+        rs2=register_dict[instruction[3]]
     if instruction[0] in ["SRAI","SUB","SRA"]:
         imm_at_end="0100000"
     else:
         imm_at_end="0000000"
     
-    return(imm_at_end+" "+rs2+rs1+funct3+rd+" "+opcode)
+    return(imm_at_end+" "+rs2+" "+ rs1+funct3+rd+" "+opcode)
 
 main(instructions)
