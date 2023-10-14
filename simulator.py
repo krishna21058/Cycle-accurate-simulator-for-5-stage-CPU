@@ -1,133 +1,134 @@
-#simulator
+# simulator
+import pdb
 
-#opcode to function
+# opcode to function
 opcode_to_func = {
-    '0000': 'add',
-    '0001': 'sub',
-    '0010': 'mul',
-    '0011': 'div',
-    '0100': 'mov',
-    '0101': 'ld',
-    '0110': 'st',
-    '0111': 'b',
-    '1000': 'beq',
-    '1001': 'bgt',
-    '1010': 'ldi',
-    '1011': 'sti',
-    '1100': 'hlt'
+    "0000": "add",
+    "0001": "sub",
+    "0010": "mul",
+    "0011": "div",
+    "0100": "mov",
+    "0101": "ld",
+    "0110": "st",
+    "0111": "b",
+    "1000": "beq",
+    "1001": "bgt",
+    "1010": "ldi",
+    "1011": "sti",
+    "1100": "hlt",
 }
 
 
 register_dict = {
-    "R0":"00000",
-    "R1":"00001",
-    "R2":"00010",
-    "R3":"00011",
-    "R4":"00100",
-    "R5":"00101",
-    "R6":"00110",
-    "R7":"00111",
-    "R8":"01000",
-    "R9":"01001",
-    "R10":"01010",
-    "R11":"01011",
-    "R12":"01100",
-    "R13":"01101",
-    "R14":"01110",
-    "R15":"01111",
-    "R16":"10000",
-    "R17":"10001",
-    "R18":"10010",
-    "R19":"10011",
-    "R20":"10100",
-    "R21":"10101",
-    "R22":"10110",
-    "R23":"10111",
-    "R24":"11000",
-    "R25":"11001",
-    "R26":"11010",
-    "R27":"11011",
-    "R28":"11100",
-    "R29":"11101",
-    "R30":"11110",
-    "R31":"11111"
+    "R0": "00000",
+    "R1": "00001",
+    "R2": "00010",
+    "R3": "00011",
+    "R4": "00100",
+    "R5": "00101",
+    "R6": "00110",
+    "R7": "00111",
+    "R8": "01000",
+    "R9": "01001",
+    "R10": "01010",
+    "R11": "01011",
+    "R12": "01100",
+    "R13": "01101",
+    "R14": "01110",
+    "R15": "01111",
+    "R16": "10000",
+    "R17": "10001",
+    "R18": "10010",
+    "R19": "10011",
+    "R20": "10100",
+    "R21": "10101",
+    "R22": "10110",
+    "R23": "10111",
+    "R24": "11000",
+    "R25": "11001",
+    "R26": "11010",
+    "R27": "11011",
+    "R28": "11100",
+    "R29": "11101",
+    "R30": "11110",
+    "R31": "11111",
 }
-#reverse this dictionary
+# reverse this dictionary
 register_dict_rev = {v: k for k, v in register_dict.items()}
 # print(register_dict_rev)
 
-#initialise all register values to 0
-reg_val={
-    "R0":0,
-    "R1":0,
-    "R2":0,
-    "R3":0,
-    "R4":0,
-    "R5":0,
-    "R6":0,
-    "R7":0,
-    "R8":0,
-    "R9":0,
-    "R10":0,
-    "R11":0,
-    "R12":0,
-    "R13":0,
-    "R14":0,
-    "R15":0,
-    "R16":0,
-    "R17":0,
-    "R18":0,
-    "R19":0,
-    "R20":0,
-    "R21":0,
-    "R22":0,
-    "R23":0,
-    "R24":0,
-    "R25":0,
-    "R26":0,
-    "R27":0,
-    "R28":0,
-    "R29":0,
-    "R30":0,
-    "R31":0
+# initialise all register values to 0
+reg_val = {
+    "R0": 1,
+    "R1": 1,
+    "R2": 1,
+    "R3": 1,
+    "R4": 1,
+    "R5": 1,
+    "R6": 1,
+    "R7": 1,
+    "R8": 1,
+    "R9": 1,
+    "R10": 1,
+    "R11": 1,
+    "R12": 1,
+    "R13": 1,
+    "R14": 1,
+    "R15": 1,
+    "R16": 1,
+    "R17": 1,
+    "R18": 1,
+    "R19": 1,
+    "R20": 1,
+    "R21": 1,
+    "R22": 1,
+    "R23": 1,
+    "R24": 1,
+    "R25": 1,
+    "R26": 1,
+    "R27": 1,
+    "R28": 1,
+    "R29": 1,
+    "R30": 1,
+    "R31": 1,
 }
 
-funct3_dict={
-    "BEQ":"000",
-    "BNE":"001",
-    "BLT":"100",
-    "BGE":"101",
-    "BLTU":"110",
-    "BGEU":"111",
-    "LB":"000",
-    "LH":"001",
-    "LW":"010",
-    "LBU":"100",
-    "LHU":"101",
-    "SB":"000",
-    "SW":"010",
-    "SH":"001",
-    "ADDI":"000",
-    "SLTI":"010",
-    "SLTIU":"011",
-    "XORI":"100",
-    "ORI":"110",
-    "ANDI":"111",
-    "SLLI":"001",
-    "SRLI":"101",
-    "SRAI":"101",
-    "ADD":"000",
-    "SUB":"000",
-    "SLL":"001",
-    "SLT":"010",
-    "SLTU":"011",
-    "XOR":"100",
-    "SRL":"101",
-    "SRA":"101",
-    "OR":"110",
-    "AND":"111" 
+funct3_dict = {
+    "BEQ": "000",
+    "BNE": "001",
+    "BLT": "100",
+    "BGE": "101",
+    "BLTU": "110",
+    "BGEU": "111",
+    "LB": "000",
+    "LH": "001",
+    "LW": "010",
+    "LBU": "100",
+    "LHU": "101",
+    "SB": "000",
+    "SW": "010",
+    "SH": "001",
+    "ADDI": "000",
+    "SLTI": "010",
+    "SLTIU": "011",
+    "XORI": "100",
+    "ORI": "110",
+    "ANDI": "111",
+    "SLLI": "001",
+    "SRLI": "101",
+    "SRAI": "101",
+    "ADD": "000",
+    "SUB": "000",
+    "SLL": "001",
+    "SLT": "010",
+    "SLTU": "011",
+    "XOR": "100",
+    "SRL": "101",
+    "SRA": "101",
+    "OR": "110",
+    "AND": "111",
 }
-#reverse this
+# reverse this
 funct3_dict_rev = {v: k for k, v in funct3_dict.items()}
 
 
@@ -144,492 +145,368 @@ funct3_dict_rev = {v: k for k, v in funct3_dict.items()}
 #     "AND":"0000000"
 # }
 
-#opcode to function type
+# opcode to function type
 opcode_to_instr = {
-    '0110111': 'LUI',
-    '0010111': 'AUIPC',
-    '1101111': 'JAL',
-    '1100111': 'JALR',
-    '1100011': {
-        '000': 'BEQ',
-        '001': 'BNE',
-        '100': 'BLT',
-        '101': 'BGE',
-        '110': 'BLTU',
-        '111': 'BGEU',
+    "0110111": "LUI",
+    "0010111": "AUIPC",
+    "1101111": "JAL",
+    "1100111": "JALR",
+    "1100011": {
+        "000": "BEQ",
+        "001": "BNE",
+        "100": "BLT",
+        "101": "BGE",
+        "110": "BLTU",
+        "111": "BGEU",
     },
-    '0000011': {
-        '000': 'LB',
-        '001': 'LH',
-        '010': 'LW',
-        '100': 'LBU',
-        '101': 'LHU',
+    "0000011": {
+        "000": "LB",
+        "001": "LH",
+        "010": "LW",
+        "100": "LBU",
+        "101": "LHU",
     },
-    '0100011': {
-        '000': 'SB',
-        '001': 'SH',
-        '010': 'SW',
+    "0100011": {
+        "000": "SB",
+        "001": "SH",
+        "010": "SW",
     },
-    '0010011': {
-        '000': 'ADDI',
-        '010': 'SLTI',
-        '011': 'SLTIU',
-        '100': 'XORI',
-        '110': 'ORI',
-        '111': 'ANDI',
+    "0010011": {
+        "000": "ADDI",
+        "010": "SLTI",
+        "011": "SLTIU",
+        "100": "XORI",
+        "110": "ORI",
+        "111": "ANDI",
     },
-    '0010011': {
-        '001': 'SLLI',
-        '101': 'SRLI',
-        '101': 'SRAI',
+    "0010011": {
+        "001": "SLLI",
+        "101": "SRLI",
+        "101": "SRAI",
     },
-    '0110011': {
-        '000': 'ADD',
-        '000': 'SUB',
-        '001': 'SLL',
-        '010': 'SLT',
-        '011': 'SLTU',
-        '100': 'XOR',
-        '101': 'SRL',
-        '101': 'SRA',
-        '110': 'OR',
-        '111': 'AND',
-    }
+    "0110011": {
+        "000": "ADD",
+        "000": "SUB",
+        "001": "SLL",
+        "010": "SLT",
+        "011": "SLTU",
+        "100": "XOR",
+        "101": "SRL",
+        "101": "SRA",
+        "110": "OR",
+        "111": "AND",
+    },
 }
 
 
+class Instruction_Memory:
+    def __init__(self, access_time=1):
+        self.access_time = access_time
+        self.memory = list()
 
-fopen=open("binary.txt","r")
+    def initialize(self):
+        f = open("binary.txt", "r")
+        data = f.read()
+        bin_instr = data.split("\n")
+        self.memory = bin_instr
+        return len(self.memory)
 
-# Read the file
-data=fopen.read()
-bin_instr=data.split("\n")
-print(bin_instr)
+    def getData(self, row):
+        return self.memory[row]
 
-for i in bin_instr:
-    opcode=i[25:32]
-    print(opcode)
-    if opcode_to_instr[opcode].__class__ == str:
-        func=opcode_to_instr[opcode]
-        if func=="LUI":
-            lui(i)
-        elif func=="AUIPC":
-            auipc(i)
-        elif func=="JAL":
-            jal(i)
-        elif func=="JALR":
-            jalr(i)
 
-        
-    else:
-        func=opcode_to_instr[opcode][i[17:20]]
-        if func=="BEQ":
-            beq(i)
-        elif func=="BNE":
-            bne(i)
-        elif func=="BLT":
-            blt(i)
-        elif func=="BGE":
-            bge(i)
-        elif func=="BLTU":
-            bltu(i)
-        elif func=="BGEU":
-            bgeu(i)
-        elif func=="LB":
-            lb(i)
-        elif func=="LH":
-            lh(i)
-        elif func=="LW":
-            lw(i)
-        elif func=="LBU":
-            lbu(i)
-        elif func=="LHU":
-            lhu(i)
-        elif func=="SB":
-            sb(i)
-        elif func=="SH":
-            sh(i)
-        elif func=="SW":
-            sw(i)
-        elif func=="ADDI":
-            addi(i)
-        elif func=="SLTI":
-            slti(i)
-        elif func=="SLTIU":
-            sltiu(i)
-        elif func=="XORI":
-            xori(i)
-        elif func=="ORI":
-            ori(i)
-        elif func=="ANDI":
-            andi(i)
-        elif func=="SLLI":
-            slli(i)
-        elif func=="SRLI":
-            srli(i)
-        elif func=="SRAI":
-            srai(i)
-        elif func=="ADD":
-            add(i)
-        elif func=="SUB":
-            sub(i)
-        elif func=="SLL":
-            sll(i)
-        elif func=="SLT":
-            slt(i)
-        elif func=="SLTU":
-            sltu(i)
-        elif func=="XOR":
-            xor(i)
-        elif func=="SRL":
-            srl(i)
-        elif func=="SRA":
-            sra(i)
-        elif func=="OR":
-            func_or(i)
-        elif func=="AND":
-            func_and(i)
+PC = 0
 
-#create functions for all instructions
-def lui(i):
-    rd=register_dict_rev[i[20:25]]
-    imm=i[0:20]
-    imm=int(imm,2)
-    reg_val[rd]=imm
-    print("LUI")
-    print(reg_val)
+mem_reg = {"4000": 0, "4004": 0, "4008": 0, "400c": 0, "4010": 0}
 
-def auipc(i):
-    rd=register_dict_rev[i[20:25]]
-    imm=i[0:20]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val["R0"]+imm
-    print("AUIPC")
-    print(reg_val)
+# def fetch(PC, IM):
+#     PC = PC + 4
+#     return IM.getData(PC)
 
-def jal(i):
-    rd=register_dict_rev[i[20:25]]
-    imm=i[0]+i[12:20]+i[11]+i[1:11]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val["R0"]+4
-    reg_val["R0"]=reg_val["R0"]+imm
-    print("JAL")
-    print(reg_val)
+# def decode(instruction):
+#     opcode = instruction[25:32]
+#     if opcode == "00
 
-def jalr(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val["R0"]+4
-    reg_val["R0"]=reg_val[rs1]+imm
-    print("JALR")
-    print(reg_val)
 
-def beq(i):
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    imm=i[0]+i[24]+i[1:7]+i[20:24]+"0"
-    imm=int(imm,2)
-    if reg_val[rs1]==reg_val[rs2]:
-        reg_val["R0"]=reg_val["R0"]+imm
-    print("BEQ")
-    print(reg_val)
+class Fetch:
+    def __init__(self, imem):
+        # self.dmem=dmem
+        self.binary = 0
+        self.imem = imem
 
-def bne(i):
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    imm=i[0]+i[24]+i[1:7]+i[20:24]+"0"
-    imm=int(imm,2)
-    if reg_val[rs1]!=reg_val[rs2]:
-        reg_val["R0"]=reg_val["R0"]+imm
-    print("BNE")
-    print(reg_val)
+    def fetch(self, PC):
+        self.binary = self.imem.getData(PC)
 
-def blt(i):
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    imm=i[0]+i[24]+i[1:7]+i[20:24]+"0"
-    imm=int(imm,2)
-    if reg_val[rs1]<reg_val[rs2]:
-        reg_val["R0"]=reg_val["R0"]+imm
-    print("BLT")
-    print(reg_val)
+    def sendToDecode(self):
+        return self.binary
 
-def bge(i):
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    imm=i[0]+i[24]+i[1:7]+i[20:24]+"0"
-    imm=int(imm,2)
-    if reg_val[rs1]>=reg_val[rs2]:
-        reg_val["R0"]=reg_val["R0"]+imm
-    print("BGE")
-    print(reg_val)
 
-def bltu(i):
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    imm=i[0]+i[24]+i[1:7]+i[20:24]+"0"
-    imm=int(imm,2)
-    if reg_val[rs1]<reg_val[rs2]:
-        reg_val["R0"]=reg_val["R0"]+imm
-    print("BLTU")
-    print(reg_val)
+class Decode:
+    def _init_(self, imem, reg_val):
+        self.register_dict = reg_val
+        self.immediate = 0
+        self.fetch = Fetch(self.imem)
+        self.binary = self.fetch.sendToDecode()
+        self.imem = imem
+        self.rd = ""
+        self.rs1 = ""
+        self.rs2 = ""
 
-def bgeu(i):
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    imm=i[0]+i[24]+i[1:7]+i[20:24]+"0"
-    imm=int(imm,2)
-    if reg_val[rs1]>=reg_val[rs2]:
-        reg_val["R0"]=reg_val["R0"]+imm
-    print("BGEU")
-    print(reg_val)
+    def decode(self, PC):
+        if self.binary == 0:
+            return
+        elif self.binary[25:32] == "0110111":
+            # LUI
+            self.rd = register_dict_rev[self.binary[20:25]]
+            self.immediate = int(self.binary[0:20], 2)
+        elif self.binary[25:32] == "0010111":
+            self.rd = register_dict_rev[self.binary[20:25]]
+            self.immediate = int(self.binary[0:20], 2)
+        elif self.binary[25:32] == "1101111":
+            self.rd = register_dict_rev[self.binary[20:25]]
+            self.immediate = int(
+                self.binary[0]
+                + self.binary[12:20]
+                + self.binary[11]
+                + self.binary[1:11],
+                2,
+            )
+        elif self.binary[25:32] == "1100111":
+            self.rs1 = register_dict_rev[self.binary[12:17]]
+            self.rd = register_dict_rev[self.binary[20:25]]
+            self.immediate = int(self.binary[0:12], 2)
+        elif self.binary[25:32] == "1100011":
+            self.rs1 = register_dict_rev[self.binary[12:17]]
+            self.rs2 = register_dict_rev[self.binary[7:12]]
+            self.immediate = int(
+                self.binary[0]
+                + self.binary[24]
+                + self.binary[1:7]
+                + self.binary[20:24],
+                2,
+            )
+        elif self.binary[25:32] == "0000011":
+            self.rs1 = register_dict_rev[self.binary[12:17]]
+            self.rd = register_dict_rev[self.binary[20:25]]
+            self.immediate = int(self.binary[0:12], 2)
+        elif self.binary[25:32] == "0100011":
+            self.rs1 = register_dict_rev[self.binary[12:17]]
+            self.rs2 = register_dict_rev[self.binary[7:12]]
+            self.immediate = int(self.binary[0:7] + self.binary[20:25], 2)
+        elif self.binary[25:32] == "0010011":
+            self.rs1 = register_dict_rev[self.binary[12:17]]
+            self.rd = register_dict_rev[self.binary[20:25]]
+            self.immediate = int(self.binary[0:12], 2)
+        elif self.binary[25:32] == "0110011":
+            self.rs1 = register_dict_rev[self.binary[12:17]]
+            self.rs2 = register_dict_rev[self.binary[7:12]]
+            self.rd = register_dict_rev[self.binary[20:25]]
+            self.immediate = 0
+        # Assumption : kar lena yaad se
 
-def lb(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val[rs1]+imm
-    print("LB")
-    print(reg_val)
+    def send_to_execute(self):
+        return [self.rd, self.rs1, self.rs2, self.immediate, self.binary]
 
-def lh(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val[rs1]+imm
-    print("LH")
-    print(reg_val)
 
-def lw(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val[rs1]+imm
-    print("LW")
-    print(reg_val)
+class Execute:
+    def __init__(self, opcode_to_instr):
+        self.decode_result = Decode.send_to_execute()
+        # self.reg1_val=0
+        # self.reg2_val=0
+        self.binary = self.decode_result[-1]
+        self.opcode_to_instr = opcode_to_instr
 
-def lbu(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val[rs1]+imm
-    print("LBU")
-    print(reg_val)
+    def execute(self, PC):
+        opcode = self.binary[25:32]
+        if self.opcode_to_instr[opcode].__class__ == str:
+            func = opcode_to_instr[opcode]
+            if func == "LUI":
+                reg_val[self.decode_result[0]] = self.decode_result[3]
 
-def lhu(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val[rs1]+imm
-    print("LHU")
-    print(reg_val)
+            elif func == "AUIPC":
+                # auipc(i)
+                reg_val[self.decode_result[0]] = reg_val["R0"] + self.decode_result[3]
+            elif func == "JAL":
+                # jal(i)
+                reg_val[self.decode_result[0]] = reg_val["R0"] + 4
+                reg_val["R0"] = reg_val["R0"] + self.decode_result[3]
+            elif func == "JALR":
+                # jalr(i)
+                reg_val[self.decode_result[0]] = reg_val["R0"] + 4
+                reg_val["R0"] = reg_val[self.decode_result[1]] + self.decode_result[3]
+        else:
+            func = self.opcode_to_instr[opcode][self.binary[17:20]]
+            if func == "BEQ":
+                # beq(i)
+                if reg_val[self.decode_result[1]] == reg_val[self.decode_result[2]]:
+                    PC += self.decode_result[3]
+            elif func == "BNE":
+                # bne(i)
+                if reg_val[self.decode_result[1]] != reg_val[self.decode_result[2]]:
+                    PC += self.decode_result[3]
+            elif func == "BLT":
+                # blt(i)
+                if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
+                    PC += self.decode_result[3]
+            elif func == "BGE":
+                # bge(i)
+                if reg_val[self.decode_result[1]] >= reg_val[self.decode_result[2]]:
+                    PC += self.decode_result[3]
+            elif func == "BLTU":
+                # bltu(i)
+                if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
+                    PC += self.decode_result[3]
+            elif func == "BGEU":
+                # bgeu(i)
+                if reg_val[self.decode_result[1]] >= reg_val[self.decode_result[2]]:
+                    PC += self.decode_result[3]
+            elif func == "LB":
+                # lb(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] + self.decode_result[3]
+                )
+            elif func == "LH":
+                # lh(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] + self.decode_result[3]
+                )
+            elif func == "LW":
+                # lw(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] + self.decode_result[3]
+                )
+            elif func == "LBU":
+                # lbu(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] + self.decode_result[3]
+                )
+            elif func == "LHU":
+                # lhu(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] + self.decode_result[3]
+                )
+            elif func == "SB":
+                # sb(i)
+                reg_val[self.decode_result[1]] = (
+                    reg_val[self.decode_result[2]] + self.decode_result[3]
+                )
+            elif func == "SH":
+                # sh(i)
+                reg_val[self.decode_result[1]] = (
+                    reg_val[self.decode_result[2]] + self.decode_result[3]
+                )
+            elif func == "SW":
+                # sw(i)
+                reg_val[self.decode_result[1]] = (
+                    reg_val[self.decode_result[2]] + self.decode_result[3]
+                )
+            elif func == "ADDI":
+                # addi(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] + self.decode_result[3]
+                )
+            elif func == "SLTI":
+                # slti(i)
+                if reg_val[self.decode_result[1]] < self.decode_result[3]:
+                    reg_val[self.decode_result[0]] = 1
+                else:
+                    reg_val[self.decode_result[0]] = 0
 
-def sb(i):
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    imm=i[0:7]+i[20:25]
-    imm=int(imm,2)
-    reg_val[rs1]=reg_val[rs2]+imm
-    print("SB")
-    print(reg_val)
+            elif func == "SLTIU":
+                # sltiu(i)
+                if reg_val[self.decode_result[1]] < self.decode_result[3]:
+                    reg_val[self.decode_result[0]] = 1
+                else:
+                    reg_val[self.decode_result[0]] = 0
+            elif func == "XORI":
+                # xori(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] ^ self.decode_result[3]
+                )
+            elif func == "ORI":
+                # ori(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] | self.decode_result[3]
+                )
+            elif func == "ANDI":
+                # andi(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] & self.decode_result[3]
+                )
+            elif func == "SLLI":
+                # slli(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] << self.decode_result[3]
+                )
+            elif func == "SRLI":
+                # srli(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] >> self.decode_result[3]
+                )
+            elif func == "SRAI":
+                # srai(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] >> self.decode_result[3]
+                )
+            elif func == "ADD":
+                # add(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] + reg_val[self.decode_result[2]]
+                )
+            elif func == "SUB":
+                # sub(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] - reg_val[self.decode_result[2]]
+                )
+            elif func == "SLL":
+                # sll(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] << reg_val[self.decode_result[2]]
+                )
+            elif func == "SLT":
+                # slt(i)
+                if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
+                    reg_val[self.decode_result[0]] = 1
+                else:
+                    reg_val[self.decode_result[0]] = 0
+            elif func == "SLTU":
+                # sltu(i)
+                if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
+                    reg_val[self.decode_result[0]] = 1
+                else:
+                    reg_val[self.decode_result[0]] = 0
+            elif func == "XOR":
+                # xor(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] ^ reg_val[self.decode_result[2]]
+                )
+            elif func == "SRL":
+                # srl(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] >> reg_val[self.decode_result[2]]
+                )
+            elif func == "SRA":
+                # sra(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] >> reg_val[self.decode_result[2]]
+                )
+            elif func == "OR":
+                # func_or(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] | reg_val[self.decode_result[2]]
+                )
+            elif func == "AND":
+                # func_and(i)
+                reg_val[self.decode_result[0]] = (
+                    reg_val[self.decode_result[1]] & reg_val[self.decode_result[2]]
+                )
+        # PC = PC + 4
 
-def sh(i):
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    imm=i[0:7]+i[20:25]
-    imm=int(imm,2)
-    reg_val[rs1]=reg_val[rs2]+imm
-    print("SH")
-    print(reg_val)
+        return PC
 
-def sw(i):
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    imm=i[0:7]+i[20:25]
-    imm=int(imm,2)
-    reg_val[rs1]=reg_val[rs2]+imm
-    print("SW")
-    print(reg_val)
+    def send_to_memory(self):
+        return [self.rd, self.rs1, self.rs2, self.immediate, self.binary]
 
-def addi(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val[rs1]+imm
-    print("ADDI")
-    print(reg_val)
 
-def slti(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    if reg_val[rs1]<imm:
-        reg_val[rd]=1
-    else:
-        reg_val[rd]=0
-    print("SLTI")
-    print(reg_val)
-
-def sltiu(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    if reg_val[rs1]<imm:
-        reg_val[rd]=1
-    else:
-        reg_val[rd]=0
-    print("SLTIU")
-    print(reg_val)
-
-def xori(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val[rs1]^imm
-    print("XORI")
-    print(reg_val)
-
-def ori(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val[rs1]|imm
-    print("ORI")
-    print(reg_val)
-
-def andi(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    imm=i[0:12]
-    imm=int(imm,2)
-    reg_val[rd]=reg_val[rs1]&imm
-    print("ANDI")
-    print(reg_val)
-
-def slli(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    shamt=i[7:12]
-    shamt=int(shamt,2)
-    reg_val[rd]=reg_val[rs1]<<shamt
-    print("SLLI")
-    print(reg_val)
-
-def srli(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    shamt=i[7:12]
-    shamt=int(shamt,2)
-    reg_val[rd]=reg_val[rs1]>>shamt
-    print("SRLI")
-    print(reg_val)
-
-def srai(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    shamt=i[7:12]
-    shamt=int(shamt,2)
-    reg_val[rd]=reg_val[rs1]>>shamt
-    print("SRAI")
-    print(reg_val)
-
-def add(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    reg_val[rd]=reg_val[rs1]+reg_val[rs2]
-    print("ADD")
-    print(reg_val)
-
-def sub(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    reg_val[rd]=reg_val[rs1]-reg_val[rs2]
-    print("SUB")
-    print(reg_val)
-
-def sll(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    reg_val[rd]=reg_val[rs1]<<reg_val[rs2]
-    print("SLL")
-    print(reg_val)
-
-def slt(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    if reg_val[rs1]<reg_val[rs2]:
-        reg_val[rd]=1
-    else:
-        reg_val[rd]=0
-    print("SLT")
-    print(reg_val)
-
-def sltu(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    if reg_val[rs1]<reg_val[rs2]:
-        reg_val[rd]=1
-    else:
-        reg_val[rd]=0
-    print("SLTU")
-    print(reg_val)
-
-def xor(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    reg_val[rd]=reg_val[rs1]^reg_val[rs2]
-    print("XOR")
-    print(reg_val)
-
-def srl(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    reg_val[rd]=reg_val[rs1]>>reg_val[rs2]
-    print("SRL")
-    print(reg_val)
-
-def sra(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    reg_val[rd]=reg_val[rs1]>>reg_val[rs2]
-    print("SRA")
-    print(reg_val)
-
-def func_or(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    reg_val[rd]=reg_val[rs1]|reg_val[rs2]
-    print("OR")
-    print(reg_val)
-
-def func_and(i):
-    rd=register_dict_rev[i[20:25]]
-    rs1=register_dict_rev[i[12:17]]
-    rs2=register_dict_rev[i[7:12]]
-    reg_val[rd]=reg_val[rs1]&reg_val[rs2]
-    print("AND")
-    print(reg_val)
-
-# main(bin_instr)
-# print(reg_val)
+class Memory:
+    pass
