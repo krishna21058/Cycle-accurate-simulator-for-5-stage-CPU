@@ -1,12 +1,13 @@
 import sys
+from sys import stdin
 
-input = input()
+# input = input()
 
-instructions = []
+# instructions = []
 
-inst=input.upper().split()
-instructions.append(inst)
-print(instructions)
+# inst=input.upper().split()
+# instructions.append(inst)
+# print(instructions)
 
 register_dict = {
     "R0":"00000",
@@ -151,22 +152,48 @@ funct3_dict={
     "AND":"111" 
 }
 
+input_file_path = '/Users/anubhav/Documents/CA_Project/input.txt'
+output_file_path = '/Users/anubhav/Documents/CA_Project/binary.txt'
+
+# Read input file and convert the instructions
+# to a format that is easy to handle.
+instructions = dict()
+# srcCode = dict()
+lineCount = 0
+
+# Open the input file
+with open(input_file_path, 'r') as file:
+    for line in file:
+        # print(line)
+        codeLine = line.replace('\n', '')
+        # print(codeLine)
+        if codeLine != '':
+            instructions[lineCount] = codeLine.upper().split()
+        
+        lineCount += 1
+
+print(instructions)
+
 def main(instructions):
+    with open(output_file_path, 'r+') as file:
+        file.truncate()
     for i in instructions:
-        if(type_dict[i[0]]=="U"):
+        # print(i)
+        if(type_dict[instructions[i][0]]=="U"):
             print(U_type(i))
-        elif(type_dict[i[0]]=="UJ"):
+        elif(type_dict[instructions[i][0]]=="UJ"):
             print(UJ_type(i))
-        elif(type_dict[i[0]]=="I"):
+        elif(type_dict[instructions[i][0]]=="I"):
             print("I")
             print(I_type(i))
-        elif(type_dict[i[0]]=="R"):
+        elif(type_dict[instructions[i][0]]=="R"):
             print(R_type(i))
-        elif(type_dict[i[0]]=="S"):
+        elif(type_dict[instructions[i][0]]=="S"):
             print(S_type(i))
-        elif(type_dict[i[0]]=="SB"):
+        elif(type_dict[instructions[i][0]]=="SB"):
             print(SB_type(i))
         
+    
 
 def U_type(i):
     assert len(i) == 3, "Wrong Instruction"
@@ -179,6 +206,11 @@ def U_type(i):
     rd = register_dict[i[1]]
     imm = bin(i[2]).replace("0b", "") 
     ans = imm+rd+opcode
+    
+    with open(output_file_path, 'a') as file:
+        file.write(ans)
+        file.write("\n")
+
     return ans
 
 
@@ -212,6 +244,9 @@ def UJ_type(i):
     imm=imm[::-1]
     ans=imm[19]+imm[9::-1]+imm[10]+imm[18:11:-1]+" "+rd+" "+opcode
     ans = imm+rd+opcode 
+    with open(output_file_path, 'a') as file:
+        file.write(ans)
+        file.write("\n")
     return ans
 
 
@@ -219,12 +254,12 @@ def S_type(i):
     opcode = "0100011"
     inst=""
 
-    func3=funct3_dict[i[0]]+" "
-    rs1 = register_dict[i[1]]+" "
-    rs2 = register_dict[i[2]]+" "
-    for it in i:
+    func3=funct3_dict[instructions[i][0]]+" "
+    rs1 = register_dict[instructions[i][1]]+" "
+    rs2 = register_dict[instructions[i][2]]+" "
+    for it in instructions[i]:
         inst+=it
-    val=int(i[3])
+    val=int(instructions[i][3])
     imm = bin(val)[2:].zfill(12) 
     if(val<0):
         abs_value = abs(val)
@@ -244,21 +279,24 @@ def S_type(i):
         imm = ''.join(result)
     
     ans=imm[0:7]+" "+rs2+rs1+func3+imm[7:12]+" "+opcode
+    with open(output_file_path, 'a') as file:
+        file.write(ans)
+        file.write("\n")
     return ans
 
 
 def I_type(i):
     opcode = (
         "1100111"
-        if i[0] == "JALR"
+        if instructions[i][0] == "JALR"
         else "0000011"
-        if i[0] in ["LB", "LH", "LW", "LBU", "LHU"]
+        if instructions[i][0] in ["LB", "LH", "LW", "LBU", "LHU"]
         else "0010011"
     )
-    rd = register_dict[i[1]]+" "
-    rs1 = register_dict[i[2]]+" "
-    func3=funct3_dict[i[0]]+" "
-    val=int(i[3])
+    rd = register_dict[instructions[i][1]]+" "
+    rs1 = register_dict[instructions[i][2]]+" "
+    func3=funct3_dict[instructions[i][0]]+" "
+    val=int(instructions[i][3])
     imm = bin(val)[2:].zfill(12) 
     if(val<0):
         abs_value = abs(val)
@@ -277,14 +315,17 @@ def I_type(i):
         
         imm = ''.join(result)
     ans=imm + " " + rs1+func3+rd+opcode
+    with open(output_file_path, 'a') as file:
+        file.write(ans)
+        file.write("\n")
     return ans
 
 def SB_type(i):
     opcode = "1100011"
-    rs1 = register_dict[i[1]]
-    rs2 = register_dict[i[2]]
-    funct3 = funct3_dict[i[0]]
-    val=int(i[3])
+    rs1 = register_dict[instructions[i][1]]
+    rs2 = register_dict[instructions[i][2]]
+    funct3 = funct3_dict[instructions[i][0]]
+    val=int(instructions[i][3])
     imm = bin(val)[2:].zfill(12) 
     if(val<0):
         abs_value = abs(val)
@@ -305,26 +346,33 @@ def SB_type(i):
 
     imm=imm[::-1]
     ans=imm[11]+ " " + imm[9:3:-1] +" "+rs2+" "+rs1+" "+funct3+" "+imm[3::-1]+" "+imm[10]+" "+opcode
+    with open(output_file_path, 'a') as file:
+        file.write(ans)
+        file.write("\n")
     return ans
 
 
-def R_type(instruction):
-    rd=register_dict[instruction[1]]+" "
-    rs1=register_dict[instruction[2]]+" "
-    funct3=funct3_dict[instruction[0]]+" "
-    if instruction[0] in ["SLLI", "SRLI", "SRAI"]:
+def R_type(i):
+    rd=register_dict[instructions[i][1]]+" "
+    rs1=register_dict[instructions[i][2]]+" "
+    funct3=funct3_dict[instructions[i][0]]+" "
+    if instructions[i][0] in ["SLLI", "SRLI", "SRAI"]:
         opcode="0010011"
-        shamt = format(int(instruction[3]), "05b")
+        shamt = format(int(instructions[i][3]), "05b")
         rs2=shamt
     else:
         opcode="0110011"
-        rs2=register_dict[instruction[3]]
-    if instruction[0] in ["SRAI","SUB","SRA"]:
+        rs2=register_dict[instructions[i][3]]
+    if instructions[i][0] in ["SRAI","SUB","SRA"]:
         imm_at_end="0100000"
     else:
         imm_at_end="0000000"
-    
-    return(imm_at_end+" "+rs2+" "+ rs1+funct3+rd+" "+opcode)
+
+    ans = imm_at_end+" "+rs2+" "+ rs1+funct3+rd+" "+opcode
+    with open(output_file_path, 'a') as file:
+        file.write(ans)
+        file.write("\n")
+    return(ans)
 
 main(instructions)
 
