@@ -1,5 +1,6 @@
 # simulator
 import pdb
+import random
 
 # opcode to function
 opcode_to_func = {
@@ -606,51 +607,26 @@ class Execute:
             self.buf_val,
         ]
 
-
-# class Memory:
-# def __init__(self):
-#     self.loadval = 0
-#     self.instruc = 0
-#     self.rd=0
-#     self.res = 0
-#     self.op2 = 0
-#     self.op1 = 0
-
-
-# def execute(self,X):
-#     (self.instruc,self.res,self.rd,self.op2,self.op1,self.imem,self.dmem) = X.sendT
-
-# def execute(self,X):
-#         (self.instruc,self.res,self.rd,self.op2,self.op1,self.imem,self.dmem) = X.sendToM()
-#         if(self.instruc[25:30]=="01000"):
-#             # store
-#             self.dmem.RF[self.res]= self.op2
-#         elif(self.instruc[25:30]=="00000"):
-#             # load
-#             self.loadval = self.dmem.RF[self.op2]
-
-# def sendToWB(self):
-#     return (self.instruc,self.rd,self.res,self.loadval,self.imem,self.dmem)
-
-
 class Memory:
-    def __init__(self):
+    def __init__(self,mem):
         self.execute_result = Execute.send_to_memory()
         self.binary = self.execute_result[4]
         self.loadval = 0
         self.loadreg = ""
+        self.mem1024=mem
 
-    def memory(self):
+    def execute(self):
         opcode = self.binary[25:32]
         if opcode == "0100011":
             # store
-            reg_val[self.execute_result[5]] = self.execute_result[6]
+            mem_addr=self.execute_result[6]
+            data_to_store = reg_val[self.execute_result[5]]
+            self.mem1024[mem_addr] = data_to_store
         # check whether writeback or memory stage
         elif opcode == "0000011":
             # load
-            self.loadval = self.execute_result[6]
-            self.loadreg = self.execute_result[5]
-            # self.execute_result[6] = reg_val[self.execute_result[5]]
+            mem_addr= self.execute_result[6]
+            reg_val[self.execute_result[5]]=self.mem1024[mem_addr]
 
     def send_to_writeback(self):
         return [
@@ -684,4 +660,26 @@ def __main__():
     IM = Instruction_Memory()
     no_instr = IM.initialize()
     PC = 0
-    # print(no_instr)
+    memory1024 = [random.randint(0, 255) for _ in range(1024)]
+
+
+    # def load(address):
+    #     if 0 <= address < 1024:
+    #         return memory[address]
+    #     else:
+    #         print("Invalid memory address")
+
+    # def store(address, data):
+    #     if 0 <= address < 1024:
+    #         memory[address] = data
+    #     else:
+    #         print("Invalid memory address")
+#Code for implementing pipeline
+
+#Function to check data hazards
+
+    def check_data_hazard(prev_instr,cur_instr):
+        if prev_instr[0]==cur_instr[1] or prev_instr[0]==cur_instr[2]:
+            return True
+        else:
+            return False
