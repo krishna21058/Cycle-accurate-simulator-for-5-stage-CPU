@@ -200,8 +200,8 @@ opcode_to_instr = {
 
 
 class Instruction_Memory:
-    def __init__(self, access_time=1):
-        self.access_time = access_time
+    def __init__(self):
+        # self.access_time = access_time
         self.memory = list()
 
     def initialize(self):
@@ -212,7 +212,7 @@ class Instruction_Memory:
         return len(self.memory)
 
     def getData(self, row):
-        return self.memory[row]
+        return self.memory[row // 4]
 
 
 PC = 0
@@ -313,6 +313,8 @@ class Execute:
         self.decode_result = Decode.send_to_execute()
         # self.reg1_val=0
         # self.reg2_val=0
+        self.reg_buffer = ""
+        self.buf_val = 0
         self.binary = self.decode_result[-1]
         self.opcode_to_instr = opcode_to_instr
 
@@ -321,192 +323,365 @@ class Execute:
         if self.opcode_to_instr[opcode].__class__ == str:
             func = opcode_to_instr[opcode]
             if func == "LUI":
-                reg_val[self.decode_result[0]] = self.decode_result[3]
-
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = self.decode_result[3]
             elif func == "AUIPC":
                 # auipc(i)
-                reg_val[self.decode_result[0]] = reg_val["R0"] + self.decode_result[3]
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = self.decode_result[3] + PC
+                # reg_val[self.decode_result[0]] = reg_val["R0"] + self.decode_result[3]
             elif func == "JAL":
-                # jal(i)
-                reg_val[self.decode_result[0]] = reg_val["R0"] + 4
-                reg_val["R0"] = reg_val["R0"] + self.decode_result[3]
+                # # jal(i)
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = PC + 4
+                # reg_val[self.decode_result[0]] = reg_val["R0"] + 4
+                # reg_val["R0"] = reg_val["R0"] + self.decode_result[3]
             elif func == "JALR":
-                # jalr(i)
-                reg_val[self.decode_result[0]] = reg_val["R0"] + 4
-                reg_val["R0"] = reg_val[self.decode_result[1]] + self.decode_result[3]
+                # # jalr(i)
+                # reg_val[self.decode_result[0]] = reg_val["R0"] + 4
+                # # baad mein karna hai
+                # reg_val["R0"] = reg_val[self.decode_result[1]] + self.decode_result[3]
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = PC + 4
         else:
             func = self.opcode_to_instr[opcode][self.binary[17:20]]
             if func == "BEQ":
                 # beq(i)
                 if reg_val[self.decode_result[1]] == reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3]
+                    PC += self.decode_result[3] - 4
             elif func == "BNE":
                 # bne(i)
                 if reg_val[self.decode_result[1]] != reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3]
+                    PC += self.decode_result[3] - 4
             elif func == "BLT":
                 # blt(i)
                 if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3]
+                    PC += self.decode_result[3] - 4
             elif func == "BGE":
                 # bge(i)
                 if reg_val[self.decode_result[1]] >= reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3]
+                    PC += self.decode_result[3] - 4
             elif func == "BLTU":
                 # bltu(i)
                 if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3]
+                    PC += self.decode_result[3] - 4
             elif func == "BGEU":
                 # bgeu(i)
                 if reg_val[self.decode_result[1]] >= reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3]
+                    PC += self.decode_result[3] - 4
             elif func == "LB":
                 # lb(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] + self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] + self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "LH":
                 # lh(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] + self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] + self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "LW":
                 # lw(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] + self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] + self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "LBU":
                 # lbu(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] + self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] + self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "LHU":
                 # lhu(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] + self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] + self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "SB":
                 # sb(i)
-                reg_val[self.decode_result[1]] = (
-                    reg_val[self.decode_result[2]] + self.decode_result[3]
-                )
+                # reg_val[self.decode_result[1]] = (
+                #     reg_val[self.decode_result[2]] + self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[1]
+                self.buf_val = reg_val[self.decode_result[2]] + self.decode_result[3]
             elif func == "SH":
                 # sh(i)
-                reg_val[self.decode_result[1]] = (
-                    reg_val[self.decode_result[2]] + self.decode_result[3]
-                )
+                # reg_val[self.decode_result[1]] = (
+                #     reg_val[self.decode_result[2]] + self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[1]
+                self.buf_val = reg_val[self.decode_result[2]] + self.decode_result[3]
             elif func == "SW":
                 # sw(i)
-                reg_val[self.decode_result[1]] = (
-                    reg_val[self.decode_result[2]] + self.decode_result[3]
-                )
+                # reg_val[self.decode_result[1]] = (
+                #     reg_val[self.decode_result[2]] + self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[1]
+                self.buf_val = reg_val[self.decode_result[2]] + self.decode_result[3]
             elif func == "ADDI":
                 # addi(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] + self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] + self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "SLTI":
                 # slti(i)
+                # if reg_val[self.decode_result[1]] < self.decode_result[3]:
+                #     reg_val[self.decode_result[0]] = 1
+                # else:
+                #     reg_val[self.decode_result[0]] = 0
+                self.reg_buffer = self.decode_result[0]
                 if reg_val[self.decode_result[1]] < self.decode_result[3]:
-                    reg_val[self.decode_result[0]] = 1
+                    self.buf_val = 1
                 else:
-                    reg_val[self.decode_result[0]] = 0
+                    self.buf_val = 0
 
             elif func == "SLTIU":
                 # sltiu(i)
+                # if reg_val[self.decode_result[1]] < self.decode_result[3]:
+                #     reg_val[self.decode_result[0]] = 1
+                # else:
+                #     reg_val[self.decode_result[0]] = 0
+                self.reg_buffer = self.decode_result[0]
                 if reg_val[self.decode_result[1]] < self.decode_result[3]:
-                    reg_val[self.decode_result[0]] = 1
+                    self.buf_val = 1
                 else:
-                    reg_val[self.decode_result[0]] = 0
+                    self.buf_val = 0
             elif func == "XORI":
                 # xori(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] ^ self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] ^ self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] ^ self.decode_result[3]
             elif func == "ORI":
                 # ori(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] | self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] | self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] | self.decode_result[3]
             elif func == "ANDI":
                 # andi(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] & self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] & self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] & self.decode_result[3]
             elif func == "SLLI":
                 # slli(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] << self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] << self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] << self.decode_result[3]
             elif func == "SRLI":
                 # srli(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] >> self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] >> self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] >> self.decode_result[3]
             elif func == "SRAI":
                 # srai(i)
-                reg_val[self.decode_result[0]] = (
-                    reg_val[self.decode_result[1]] >> self.decode_result[3]
-                )
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] >> self.decode_result[3]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] >> self.decode_result[3]
             elif func == "ADD":
                 # add(i)
-                reg_val[self.decode_result[0]] = (
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] + reg_val[self.decode_result[2]]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = (
                     reg_val[self.decode_result[1]] + reg_val[self.decode_result[2]]
                 )
             elif func == "SUB":
                 # sub(i)
-                reg_val[self.decode_result[0]] = (
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] - reg_val[self.decode_result[2]]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = (
                     reg_val[self.decode_result[1]] - reg_val[self.decode_result[2]]
                 )
             elif func == "SLL":
                 # sll(i)
-                reg_val[self.decode_result[0]] = (
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] << reg_val[self.decode_result[2]]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = (
                     reg_val[self.decode_result[1]] << reg_val[self.decode_result[2]]
                 )
             elif func == "SLT":
                 # slt(i)
+                # if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
+                #     reg_val[self.decode_result[0]] = 1
+                # else:
+                #     reg_val[self.decode_result[0]] = 0
+                self.reg_buffer = self.decode_result[0]
                 if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
-                    reg_val[self.decode_result[0]] = 1
+                    self.buf_val = 1
                 else:
-                    reg_val[self.decode_result[0]] = 0
+                    self.buf_val = 0
             elif func == "SLTU":
                 # sltu(i)
+                # if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
+                #     reg_val[self.decode_result[0]] = 1
+                # else:
+                #     reg_val[self.decode_result[0]] = 0
+                self.reg_buffer = self.decode_result[0]
                 if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
-                    reg_val[self.decode_result[0]] = 1
+                    self.buf_val = 1
                 else:
-                    reg_val[self.decode_result[0]] = 0
+                    self.buf_val = 0
             elif func == "XOR":
                 # xor(i)
-                reg_val[self.decode_result[0]] = (
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] ^ reg_val[self.decode_result[2]]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = (
                     reg_val[self.decode_result[1]] ^ reg_val[self.decode_result[2]]
                 )
             elif func == "SRL":
                 # srl(i)
-                reg_val[self.decode_result[0]] = (
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] >> reg_val[self.decode_result[2]]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = (
                     reg_val[self.decode_result[1]] >> reg_val[self.decode_result[2]]
                 )
             elif func == "SRA":
                 # sra(i)
-                reg_val[self.decode_result[0]] = (
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] >> reg_val[self.decode_result[2]]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = (
                     reg_val[self.decode_result[1]] >> reg_val[self.decode_result[2]]
                 )
             elif func == "OR":
                 # func_or(i)
-                reg_val[self.decode_result[0]] = (
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] | reg_val[self.decode_result[2]]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = (
                     reg_val[self.decode_result[1]] | reg_val[self.decode_result[2]]
                 )
             elif func == "AND":
                 # func_and(i)
-                reg_val[self.decode_result[0]] = (
+                # reg_val[self.decode_result[0]] = (
+                #     reg_val[self.decode_result[1]] & reg_val[self.decode_result[2]]
+                # )
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = (
                     reg_val[self.decode_result[1]] & reg_val[self.decode_result[2]]
                 )
-        # PC = PC + 4
+        PC = PC + 4
 
         return PC
 
     def send_to_memory(self):
-        return [self.rd, self.rs1, self.rs2, self.immediate, self.binary]
+        return [
+            self.rd,
+            self.rs1,
+            self.rs2,
+            self.immediate,
+            self.binary,
+            self.reg_buffer,
+            self.buf_val,
+        ]
+
+
+# class Memory:
+# def __init__(self):
+#     self.loadval = 0
+#     self.instruc = 0
+#     self.rd=0
+#     self.res = 0
+#     self.op2 = 0
+#     self.op1 = 0
+
+
+# def execute(self,X):
+#     (self.instruc,self.res,self.rd,self.op2,self.op1,self.imem,self.dmem) = X.sendT
+
+# def execute(self,X):
+#         (self.instruc,self.res,self.rd,self.op2,self.op1,self.imem,self.dmem) = X.sendToM()
+#         if(self.instruc[25:30]=="01000"):
+#             # store
+#             self.dmem.RF[self.res]= self.op2
+#         elif(self.instruc[25:30]=="00000"):
+#             # load
+#             self.loadval = self.dmem.RF[self.op2]
+
+# def sendToWB(self):
+#     return (self.instruc,self.rd,self.res,self.loadval,self.imem,self.dmem)
 
 
 class Memory:
-    pass
+    def __init__(self):
+        self.execute_result = Execute.send_to_memory()
+        self.binary = self.execute_result[4]
+        self.loadval = 0
+        self.loadreg = ""
+
+    def memory(self):
+        opcode = self.binary[25:32]
+        if opcode == "0100011":
+            # store
+            reg_val[self.execute_result[5]] = self.execute_result[6]
+        # check whether writeback or memory stage
+        elif opcode == "0000011":
+            # load
+            self.loadval = self.execute_result[6]
+            self.loadreg = self.execute_result[5]
+            # self.execute_result[6] = reg_val[self.execute_result[5]]
+
+    def send_to_writeback(self):
+        return [
+            self.loadval,
+            self.loadreg,
+            self.binary,
+            self.execute_result[5],
+            self.execute_result[6],
+        ]
+
+
+class Writeback:
+    def __init__(self):
+        self.memory_result = Memory.send_to_writeback()
+        self.binary = self.memory_result[2]
+        self.loadval = self.memory_result[0]
+        self.loadreg = self.memory_result[1]
+        self.reg_buffer = self.memory_result[3]
+        self.buf_val = self.memory_result[4]
+
+    def writeback(self):
+        opcode = self.binary[25:32]
+        if opcode == "0000011":
+            # load
+            reg_val[self.loadreg] = self.loadval
+        else:
+            reg_val[self.reg_buffer] = self.buf_val
+
+
+def __main__():
+    IM = Instruction_Memory()
+    no_instr = IM.initialize()
+    PC = 0
+    # print(no_instr)
