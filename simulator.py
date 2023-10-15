@@ -331,19 +331,6 @@ class Execute:
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = self.decode_result[3] + PC
                 # reg_val[self.decode_result[0]] = reg_val["R0"] + self.decode_result[3]
-            elif func == "JAL":
-                # # jal(i)
-                self.reg_buffer = self.decode_result[0]
-                self.buf_val = PC + 4
-                # reg_val[self.decode_result[0]] = reg_val["R0"] + 4
-                # reg_val["R0"] = reg_val["R0"] + self.decode_result[3]
-            elif func == "JALR":
-                # # jalr(i)
-                # reg_val[self.decode_result[0]] = reg_val["R0"] + 4
-                # # baad mein karna hai
-                # reg_val["R0"] = reg_val[self.decode_result[1]] + self.decode_result[3]
-                self.reg_buffer = self.decode_result[0]
-                self.buf_val = PC + 4
         else:
             func = self.opcode_to_instr[opcode][self.binary[17:20]]
             if func == "BEQ":
@@ -656,30 +643,114 @@ class Writeback:
             reg_val[self.reg_buffer] = self.buf_val
 
 
+def check_data_hazard(prev_instr,cur_instr):
+    if prev_instr[0]==cur_instr[1] or prev_instr[0]==cur_instr[2]:
+        return True
+    else:
+        return False
+    
+
 def __main__():
     IM = Instruction_Memory()
     no_instr = IM.initialize()
     PC = 0
     memory1024 = [random.randint(0, 255) for _ in range(1024)]
+    end=0
+    # pipeline_arr =  [-1,-1,-1,-1,-1]
+    # # F D X M W
 
+    # end=0
+    # i=0
+    # while end!=1:
+    #     cur_ins=IM.memory[i]
+    #     if(i>0):
+    #         prev_ins=IM.memory[i-1]
+    #         # if(check_data_hazard(prev_ins,cur_ins)):
+    #     if pipeline_arr[0]==-1:
+    #         fetchvar = Fetch(IM)
+    #         fetchvar.fetch(PC)
+    #         pipeline_arr[0]=i
+    #     elif pipeline_arr[1]==-1:
+    #         decodevar = Decode(IM, reg_val)
+    #         decodevar.decode(PC)
+    #         pipeline_arr[0]=-1
+    #         pipeline_arr[1]=i
+    #         if pipeline_arr[0]==-1:
+    #             fetchvar = Fetch(IM)
+    #             fetchvar.fetch(PC)
+    #             pipeline_arr[0]=i
 
-    # def load(address):
-    #     if 0 <= address < 1024:
-    #         return memory[address]
-    #     else:
-    #         print("Invalid memory address")
+    #     elif pipeline_arr[2]==-1:
+    #         executevar=Execute(opcode_to_instr)
+    #         executevar.execute(PC)
+    #         pipeline_arr[1]=-1
+    #         pipeline_arr[2]=i
+    #         if pipeline_arr[1]==-1:
+    #             decodevar = Decode(IM, reg_val)
+    #             decodevar.decode(PC)
+    #             pipeline_arr[1]=i
 
-    # def store(address, data):
-    #     if 0 <= address < 1024:
-    #         memory[address] = data
-    #     else:
-    #         print("Invalid memory address")
-#Code for implementing pipeline
+    # pipeline_arr=[0,-1,-1,-1,-1]
+    # i=0
+    # while i<no_instr and end==0:
+    # #   cur_ins=IM.memory[i]
+    #   if(pipeline_arr[0]==i):
+    #     # fetch
+    #     fetchvar = Fetch(IM)
+    #     fetchvar.fetch(PC)
+    #     pipeline_arr[1]=pipeline_arr[0]
+    #     pipeline_arr[0]+=1
 
-#Function to check data hazards
+    #   elif pipeline_arr[1]==i:
+    #     # decode
+    #     decodevar = Decode(IM, reg_val)
+    #     decodevar.decode(PC)
 
-    def check_data_hazard(prev_instr,cur_instr):
-        if prev_instr[0]==cur_instr[1] or prev_instr[0]==cur_instr[2]:
-            return True
-        else:
-            return False
+    #   elif pipeline_arr[2]==i:
+    #     # p
+
+    pipeline_arr=[0,0,0,0,0]
+    i=0
+    stage ={
+    }
+    for i in range(no_instr):
+        stage[i]='F'
+
+    while end!=1:
+      for i in range(no_instr):
+        # instruc = inst_mem.getData(i)
+        if(stage[i]=='F' and pipeline_arr[0]==0):
+            fetchvar = Fetch(IM)
+            fetchvar.fetch(PC)
+            pipeline_arr[0]=1
+            stage[i]='D'
+        elif (stage[i]=='D' and pipeline_arr[1]==0):
+          # decode
+            pipeline_arr[1]=1
+            decodevar = Decode(IM, reg_val)
+            decodevar.decode(PC)
+            pipeline_arr[0]=0
+            stage[i]='X'
+        elif stage[i]=='X' and pipeline_arr[2]==0:
+          # execute
+            pipeline_arr[2]=1
+            executevar=Execute(opcode_to_instr)
+            executevar.execute(PC)
+            pipeline_arr[1]=0
+            stage[i]='M'
+        elif stage[i]=='M' and pipeline_arr[3]==0:
+            # memory
+            pipeline_arr[3]=1
+            memoryvar=Memory(memory1024)
+            memoryvar.execute()
+            pipeline_arr[2]=0
+            stage[i]='W'
+        elif stage[i]=='W' and pipeline_arr[4]==0:
+            # writeback
+            pipeline_arr[4]=1
+            writebackvar=Writeback()
+            writebackvar.writeback()
+            pipeline_arr[3]=0
+
+        if(stage[no_instr-1]=='W'): end=1
+
