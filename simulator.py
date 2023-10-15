@@ -709,48 +709,57 @@ def __main__():
     #   elif pipeline_arr[2]==i:
     #     # p
 
-    pipeline_arr=[0,0,0,0,0]
-    i=0
-    stage ={
-    }
+    pipeline_arr = [0, 0, 0, 0, 0]
+    no_instr=5
+    end=0
+    i = 0
+    stage = {}
     for i in range(no_instr):
-        stage[i]='F'
+        stage[i] = "F"
+    cycle=0
+    
+    while end == 0:
+        # for i in range(no_instr):
+          
+        # print("\n")
+        print("Cycle",cycle)
+        cycle+=1
+        for i in range(0,len(stage)):
+            print(i, stage[i])
+        for i in range(no_instr):
+            # instruc = inst_mem.getData(i)
+            if stage[i] == "F" and pipeline_arr[0] == 0:
+                pipeline_arr[0] = 1
+                stage[i] = "D"
 
-    while end!=1:
-      for i in range(no_instr):
-        # instruc = inst_mem.getData(i)
-        if(stage[i]=='F' and pipeline_arr[0]==0):
-            fetchvar = Fetch(IM)
-            fetchvar.fetch(PC)
-            pipeline_arr[0]=1
-            stage[i]='D'
-        elif (stage[i]=='D' and pipeline_arr[1]==0):
-          # decode
-            pipeline_arr[1]=1
-            decodevar = Decode(IM, reg_val)
-            decodevar.decode(PC)
-            pipeline_arr[0]=0
-            stage[i]='X'
-        elif stage[i]=='X' and pipeline_arr[2]==0:
-          # execute
-            pipeline_arr[2]=1
-            executevar=Execute(opcode_to_instr)
-            executevar.execute(PC)
-            pipeline_arr[1]=0
-            stage[i]='M'
-        elif stage[i]=='M' and pipeline_arr[3]==0:
-            # memory
-            pipeline_arr[3]=1
-            memoryvar=Memory(memory1024)
-            memoryvar.execute()
-            pipeline_arr[2]=0
-            stage[i]='W'
-        elif stage[i]=='W' and pipeline_arr[4]==0:
-            # writeback
-            pipeline_arr[4]=1
-            writebackvar=Writeback()
-            writebackvar.writeback()
-            pipeline_arr[3]=0
+            elif stage[i] == "D" and pipeline_arr[1] == 0:
+                # decode
+                pipeline_arr[1] = 1
+                stage[i] = "X"
 
-        if(stage[no_instr-1]=='W'): end=1
+            elif stage[i] == "X" and pipeline_arr[2] == 0:
+                # execute
+                pipeline_arr[2] = 1
+                stage[i] = "M"
+
+            elif stage[i] == "M" and pipeline_arr[3] == 0:
+                # memory
+                pipeline_arr[3] = 1
+
+                stage[i] = "W"
+
+            elif stage[i] == "W" and pipeline_arr[4] == 0:
+                # writeback
+
+                pipeline_arr[4] = 1
+                stage[i] = ""
+          
+        
+            if stage[no_instr - 1] == "W":
+                end = 1
+        pipeline_arr=[0,0,0,0,0]
+        print("\n")
+    print("Cycle",cycle)
+    for i in range(0,len(stage)):
+      print(i, stage[i])
 
