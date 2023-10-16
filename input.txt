@@ -1,5 +1,5 @@
 ADDI    r31     r0      6
-ADDI    r30     r0      2
+ADDI    r30     r31      2
 ADDI    r2      r0      1
 SW      r1      r3      0
 SW      r2      r3      4

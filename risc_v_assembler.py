@@ -208,7 +208,6 @@ def U_type(i):
         file.write("\n")
     return ans
 
-
 def UJ_type(i):
     assert len(i) == 3, "Wrong Instruction"
     assert i[0] == "JAL", "Wrong Instruction"
@@ -225,7 +224,6 @@ def UJ_type(i):
         imm = bin(abs_value)[2:].zfill(12)
         inverted_binary = "".join("1" if bit == "0" else "0" for bit in imm)
 
-        # Add 1 to the inverted binary to get the 2's complement representation.
         carry = 1
         result = []
         for bit in reversed(inverted_binary):
@@ -237,21 +235,19 @@ def UJ_type(i):
 
         imm = "".join(result)
     imm = imm[::-1]
-    ans = imm[19] + imm[9::-1] + imm[10] + imm[18:11:-1] + " " + rd + " " + opcode
     ans = imm + rd + opcode
     with open(output_file_path, "a") as file:
         file.write(ans)
         file.write("\n")
     return ans
 
-
 def S_type(i):
     opcode = "0100011"
     inst = ""
 
-    func3 = funct3_dict[instructions[i][0]] + " "
-    rs1 = register_dict[instructions[i][1]] + " "
-    rs2 = register_dict[instructions[i][2]] + " "
+    func3 = funct3_dict[instructions[i][0]]
+    rs1 = register_dict[instructions[i][1]]
+    rs2 = register_dict[instructions[i][2]]
     for it in instructions[i]:
         inst += it
     val = int(instructions[i][3])
@@ -261,7 +257,6 @@ def S_type(i):
         imm = bin(abs_value)[2:].zfill(12)
         inverted_binary = "".join("1" if bit == "0" else "0" for bit in imm)
 
-        # Add 1 to the inverted binary to get the 2's complement representation.
         carry = 1
         result = []
         for bit in reversed(inverted_binary):
@@ -273,12 +268,11 @@ def S_type(i):
 
         imm = "".join(result)
 
-    ans = imm[0:7] + " " + rs2 + rs1 + func3 + imm[7:12] + " " + opcode
+    ans = imm[0:7] + rs2 + rs1 + func3 + imm[7:12] + opcode
     with open(output_file_path, "a") as file:
         file.write(ans)
         file.write("\n")
     return ans
-
 
 def I_type(i):
     opcode = (
@@ -288,9 +282,9 @@ def I_type(i):
         if instructions[i][0] in ["LB", "LH", "LW", "LBU", "LHU"]
         else "0010011"
     )
-    rd = register_dict[instructions[i][1]] + " "
-    rs1 = register_dict[instructions[i][2]] + " "
-    func3 = funct3_dict[instructions[i][0]] + " "
+    rd = register_dict[instructions[i][1]]
+    rs1 = register_dict[instructions[i][2]]
+    func3 = funct3_dict[instructions[i][0]]
     val = int(instructions[i][3])
     imm = bin(val)[2:].zfill(12)
     if val < 0:
@@ -298,7 +292,6 @@ def I_type(i):
         imm = bin(abs_value)[2:].zfill(12)
         inverted_binary = "".join("1" if bit == "0" else "0" for bit in imm)
 
-        # Add 1 to the inverted binary to get the 2's complement representation.
         carry = 1
         result = []
         for bit in reversed(inverted_binary):
@@ -309,12 +302,11 @@ def I_type(i):
                 result.insert(0, "1" if carry == 0 else "0")
 
         imm = "".join(result)
-    ans = imm + " " + rs1 + func3 + rd + opcode
+    ans = imm + rs1 + func3 + rd + opcode
     with open(output_file_path, "a") as file:
         file.write(ans)
         file.write("\n")
     return ans
-
 
 def SB_type(i):
     opcode = "1100011"
@@ -328,7 +320,6 @@ def SB_type(i):
         imm = bin(abs_value)[2:].zfill(12)
         inverted_binary = "".join("1" if bit == "0" else "0" for bit in imm)
 
-        # Add 1 to the inverted binary to get the 2's complement representation.
         carry = 1
         result = []
         for bit in reversed(inverted_binary):
@@ -341,33 +332,16 @@ def SB_type(i):
         imm = "".join(result)
 
     imm = imm[::-1]
-    ans = (
-        imm[11]
-        + " "
-        + imm[9:3:-1]
-        + " "
-        + rs2
-        + " "
-        + rs1
-        + " "
-        + funct3
-        + " "
-        + imm[3::-1]
-        + " "
-        + imm[10]
-        + " "
-        + opcode
-    )
+    ans = imm[11] + imm[9:3:-1] + rs2 + rs1 + funct3 + imm[3::-1] + imm[10] + opcode
     with open(output_file_path, "a") as file:
         file.write(ans)
         file.write("\n")
     return ans
 
-
 def R_type(ins):
-    rd = register_dict[instructions[ins][1]] + " "
-    rs1 = register_dict[instructions[ins][2]] + " "
-    funct3 = funct3_dict[instructions[ins][0]] + " "
+    rd = register_dict[instructions[ins][1]]
+    rs1 = register_dict[instructions[ins][2]]
+    funct3 = funct3_dict[instructions[ins][0]]
     if instructions[ins][0] in ["SLLI", "SRLI", "SRAI"]:
         opcode = "0010011"
         shamt = format(int(instructions[ins][3]), "05b")
@@ -379,12 +353,13 @@ def R_type(ins):
         imm_at_end = "0100000"
     else:
         imm_at_end = "0000000"
-
-    ans = imm_at_end + " " + rs2 + " " + rs1 + funct3 + rd + " " + opcode
+    ans = imm_at_end + rs2 + rs1 + funct3 + rd + opcode
     with open(output_file_path, "a") as file:
         file.write(ans)
         file.write("\n")
     return ans
+
+main(instructions)
 
 
 main(instructions)
