@@ -4,7 +4,7 @@ import sys
 
 instructions = []
 
-input_file_path = "input.txt"
+input_file_path = "input1.txt"
 output_file_path = "binary.txt"
 
 # Read input file and convert the instructions
@@ -134,6 +134,8 @@ type_dict = {
     "SRA": "R",
     "OR": "R",
     "AND": "R",
+    "LOADNOC": "LOADNOC",
+    "STORENOC": "STORENOC",
 }
 
 funct3_dict = {
@@ -173,16 +175,65 @@ funct3_dict = {
 }
 
 
+# LOADNOC, STORENOC
+def loadnoc(i):
+    opcode = "1111111"
+    rd = register_dict[instructions[i][1]]
+    rs1 = register_dict[instructions[i][2]]
+    func3 = "111"
+    imm = bin(int(instructions[i][3]))[2:].zfill(12)
+    if int(instructions[i][3]) < 0:
+        abs_value = abs(int(instructions[i][3]))
+        imm = bin(abs_value)[2:].zfill(12)
+        inverted_binary = "".join("1" if bit == "0" else "0" for bit in imm)
+
+        carry = 1
+        result = []
+        for bit in reversed(inverted_binary):
+            if bit == "0":
+                result.insert(0, str(carry))
+                carry = 0
+            else:
+                result.insert(0, "1" if carry == 0 else "0")
+
+        imm = "".join(result)
+    ans = imm + rs1 + func3 + rd + opcode
+    with open(output_file_path, "a") as file:
+        file.write(ans)
+        file.write("\n")
+    return ans
+
+
+# Syntax: STORENOC
+# This instruction is similar to LOADNOC, but it will always write
+# the integer 1 to the Memory Mapped Register with address
+# 0x4010(MMR4). Note that this instruction does not take any
+# argument. So you need to hardcode that when this instruction
+# is issued, the memory mapped register with address 0x4010
+# will be written with the value 1.
+def storenoc(i):
+    opcode = "0000000"
+    rd = "00000"
+    rs1 = "00000"
+    func3 = "111"
+    imm = "000000000000"
+    ans = imm + rs1 + func3 + rd + opcode
+    with open(output_file_path, "a") as file:
+        file.write(ans)
+        file.write("\n")
+    return ans
+
+
 def main(instructions):
     with open(output_file_path, "r+") as file:
         file.truncate()
     for i in instructions:
         if type_dict[instructions[i][0]] == "U":
+            # pass
             print(U_type(i))
         elif type_dict[instructions[i][0]] == "UJ":
             print(UJ_type(i))
         elif type_dict[instructions[i][0]] == "I":
-            print("I")
             print(I_type(i))
         elif type_dict[instructions[i][0]] == "R":
             print(R_type(i))
@@ -190,6 +241,10 @@ def main(instructions):
             print(S_type(i))
         elif type_dict[instructions[i][0]] == "SB":
             print(SB_type(i))
+        elif instructions[i][0] == "LOADNOC":
+            print(loadnoc(i))
+        elif instructions[i][0] == "STORENOC":
+            print(storenoc(i))
 
 
 def U_type(i):
@@ -207,6 +262,7 @@ def U_type(i):
         file.write(ans)
         file.write("\n")
     return ans
+
 
 def UJ_type(i):
     assert len(i) == 3, "Wrong Instruction"
@@ -241,6 +297,7 @@ def UJ_type(i):
         file.write("\n")
     return ans
 
+
 def S_type(i):
     opcode = "0100011"
     inst = ""
@@ -273,6 +330,7 @@ def S_type(i):
         file.write(ans)
         file.write("\n")
     return ans
+
 
 def I_type(i):
     opcode = (
@@ -308,6 +366,7 @@ def I_type(i):
         file.write("\n")
     return ans
 
+
 def SB_type(i):
     opcode = "1100011"
     rs1 = register_dict[instructions[i][1]]
@@ -338,6 +397,7 @@ def SB_type(i):
         file.write("\n")
     return ans
 
+
 def R_type(ins):
     rd = register_dict[instructions[ins][1]]
     rs1 = register_dict[instructions[ins][2]]
@@ -358,6 +418,7 @@ def R_type(ins):
         file.write(ans)
         file.write("\n")
     return ans
+
 
 main(instructions)
 
