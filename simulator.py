@@ -201,44 +201,37 @@ opcode_to_instr = {
 
 
 class Instruction_Memory:
-    def __init__(self,pc_update=1):
-        
+    def __init__(self, pc_update=1):
         self.memory = list()
 
     def initialize(self):
-        f = open("test.txt", "r")
+        f = open("binary.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
         self.memory = bin_instr
-        
+
     def list_of_instr(self):
-        f = open("test.txt", "r")
+        f = open("binary.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
         return bin_instr
+
     def getData(self, row):
         return self.memory[row]
+
     def get_len(sef):
-        f = open("test.txt", "r")
+        f = open("binary.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
         return len(bin_instr)
 
+
 PC = 0
 
-mem_reg = {"4000": 0, "4004": 0, "4008": 0, "400c": 0, "4010": 0}
-
-# def fetch(PC, IM):
-#     PC = PC + 4
-#     return IM.getData(PC)
-
-# def decode(instruction):
-#     opcode = instruction[25:32]
-#     if opcode == "00
+memory1024 = [random.randint(0, 255) for _ in range(1024)]
+memmap_reg = {"1025": 0, "1026": 0, "1027": 0, "1028": 0, "1029": 0}
 
 
-
-        
 class Fetch:
     def __init__(self, imem):
         # self.dmem=dmem
@@ -313,16 +306,19 @@ class Decode:
             self.rs2 = register_dict_rev[self.binary[7:12]]
             self.rd = register_dict_rev[self.binary[20:25]]
             self.immediate = 0
-        # Assumption : kar lena yaad se
+        elif self.binary[25:32] == "1111111":
+            self.rd = register_dict_rev[self.binary[20:25]]
+            self.rs1 = register_dict_rev[self.binary[12:17]]
+            self.immediate = int(self.binary[0:12], 2)
 
     def send_to_execute(self):
         return [self.rd, self.rs1, self.rs2, self.immediate, self.binary]
 
 
 class Execute:
-    def __init__(self, opcode_to_instr,imem):
+    def __init__(self, opcode_to_instr, imem):
         self.imem = imem
-        self.decode = Decode(self.imem,reg_val)
+        self.decode = Decode(self.imem, reg_val)
         self.decode_result = self.decode.send_to_execute()
 
         self.reg_buffer = ""
@@ -331,7 +327,7 @@ class Execute:
         self.opcode_to_instr = opcode_to_instr
 
     def execute(self, PC):
-        print("**************",self.binary)
+        print("**************", self.binary)
         opcode = self.binary[25:32]
         if self.opcode_to_instr[opcode].__class__ == str:
             func = opcode_to_instr[opcode]
@@ -339,74 +335,57 @@ class Execute:
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = self.decode_result[3]
             elif func == "AUIPC":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = self.decode_result[3] + PC
                 # reg_val[self.decode_result[0]] = reg_val["R0"] + self.decode_result[3]
         else:
             func = self.opcode_to_instr[opcode][self.binary[17:20]]
             if func == "BEQ":
-
                 if reg_val[self.decode_result[1]] == reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3] 
+                    PC += self.decode_result[3]
             elif func == "BNE":
-   
                 if reg_val[self.decode_result[1]] != reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3] 
+                    PC += self.decode_result[3]
             elif func == "BLT":
-   
                 if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3] 
+                    PC += self.decode_result[3]
             elif func == "BGE":
-
                 if reg_val[self.decode_result[1]] >= reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3] 
+                    PC += self.decode_result[3]
             elif func == "BLTU":
-
                 if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3] 
+                    PC += self.decode_result[3]
             elif func == "BGEU":
-
                 if reg_val[self.decode_result[1]] >= reg_val[self.decode_result[2]]:
-                    PC += self.decode_result[3] 
+                    PC += self.decode_result[3]
             elif func == "LB":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "LH":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "LW":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "LBU":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "LHU":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "SB":
-
                 self.reg_buffer = self.decode_result[1]
                 self.buf_val = reg_val[self.decode_result[2]] + self.decode_result[3]
             elif func == "SH":
-
                 self.reg_buffer = self.decode_result[1]
                 self.buf_val = reg_val[self.decode_result[2]] + self.decode_result[3]
             elif func == "SW":
-
                 self.reg_buffer = self.decode_result[1]
                 self.buf_val = reg_val[self.decode_result[2]] + self.decode_result[3]
             elif func == "ADDI":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
             elif func == "SLTI":
-
                 self.reg_buffer = self.decode_result[0]
                 if reg_val[self.decode_result[1]] < self.decode_result[3]:
                     self.buf_val = 1
@@ -414,98 +393,85 @@ class Execute:
                     self.buf_val = 0
 
             elif func == "SLTIU":
-
                 self.reg_buffer = self.decode_result[0]
                 if reg_val[self.decode_result[1]] < self.decode_result[3]:
                     self.buf_val = 1
                 else:
                     self.buf_val = 0
             elif func == "XORI":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] ^ self.decode_result[3]
             elif func == "ORI":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] | self.decode_result[3]
             elif func == "ANDI":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] & self.decode_result[3]
             elif func == "SLLI":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] << self.decode_result[3]
             elif func == "SRLI":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] >> self.decode_result[3]
             elif func == "SRAI":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] >> self.decode_result[3]
             elif func == "ADD":
-                
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = (
                     reg_val[self.decode_result[1]] + reg_val[self.decode_result[2]]
                 )
             elif func == "SUB":
-     
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = (
                     reg_val[self.decode_result[1]] - reg_val[self.decode_result[2]]
                 )
             elif func == "SLL":
- 
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = (
                     reg_val[self.decode_result[1]] << reg_val[self.decode_result[2]]
                 )
             elif func == "SLT":
-
                 self.reg_buffer = self.decode_result[0]
                 if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
                     self.buf_val = 1
                 else:
                     self.buf_val = 0
             elif func == "SLTU":
-
                 self.reg_buffer = self.decode_result[0]
                 if reg_val[self.decode_result[1]] < reg_val[self.decode_result[2]]:
                     self.buf_val = 1
                 else:
                     self.buf_val = 0
             elif func == "XOR":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = (
                     reg_val[self.decode_result[1]] ^ reg_val[self.decode_result[2]]
                 )
             elif func == "SRL":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = (
                     reg_val[self.decode_result[1]] >> reg_val[self.decode_result[2]]
                 )
             elif func == "SRA":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = (
                     reg_val[self.decode_result[1]] >> reg_val[self.decode_result[2]]
                 )
             elif func == "OR":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = (
                     reg_val[self.decode_result[1]] | reg_val[self.decode_result[2]]
                 )
             elif func == "AND":
-
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = (
                     reg_val[self.decode_result[1]] & reg_val[self.decode_result[2]]
                 )
+            elif self.binary[25:32] == "1111111":
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
+
         # PC = PC + 4
 
         # return PC
@@ -521,26 +487,35 @@ class Execute:
             self.buf_val,
         ]
 
+
 class Memory:
-    def __init__(self,mem):
+    def __init__(self, mem):
         self.execute_result = Execute.send_to_memory()
         self.binary = self.execute_result[4]
         self.loadval = 0
         self.loadreg = ""
-        self.mem1024=mem
+        self.mem1024 = mem
 
     def execute(self):
         opcode = self.binary[25:32]
         if opcode == "0100011":
             # store
-            mem_addr=self.execute_result[6]
+            mem_addr = self.execute_result[6]
             data_to_store = reg_val[self.execute_result[5]]
             self.mem1024[mem_addr] = data_to_store
         # check whether writeback or memory stage
         elif opcode == "0000011":
             # load
-            mem_addr= self.execute_result[6]
-            reg_val[self.execute_result[5]]=self.mem1024[mem_addr]
+            mem_addr = self.execute_result[6]
+            reg_val[self.execute_result[5]] = self.mem1024[mem_addr]
+        elif opcode == "1111111":
+            # print("here")
+            mem_addr = self.execute_result[6]
+            if mem_addr >= 1025 and mem_addr <= 1028:
+                data_to_store = reg_val[self.execute_result[5]]
+                memmap_reg[str(mem_addr)] = data_to_store
+        elif opcode == "0000000":
+            memmap_reg["1029"] = 1
 
     def send_to_writeback(self):
         return [
@@ -570,72 +545,120 @@ class Writeback:
             reg_val[self.reg_buffer] = self.buf_val
 
 
-
-
-
-
-
 class Instruction:
+    def __init__(self, Binary):
+        self.binary = Binary
+        self.F_starting = -1
+        self.F_ending = -1
+        self.D_starting = -1
+        self.D_ending = -1
+        self.Ex = -1
+        self.Mem = -1
+        self.Wr = -1
 
-    def __init__(self,Binary) :
-        self.binary=Binary
-        self.F_starting=-1
-        self.F_ending=-1
-        self.D_starting=-1
-        self.D_ending=-1
-        self.Ex=-1
-        self.Mem=-1
-        self.Wr=-1
-    def check_hazard(prev_instrction,self):
-        
-        prev_rd=register_dict_rev[prev_instrction.binary[20:25]]
-        rs1_current=register_dict_rev[self.binary[12:17]]
-        print(prev_rd,rs1_current)
-        if(prev_rd==rs1_current):
-            return True
-        else: 
+    def check_hazard(prev_instrction, self):
+        if prev_instrction.binary[25:32] == "1100011":
+            prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+            rs1_current = register_dict_rev[self.binary[12:17]]
+            rs2_current = register_dict_rev[self.binary[7:12]]
+            if prev_rd == rs1_current or prev_rd == rs2_current:
+                return True
+            else:
+                return False
+        elif prev_instrction.binary[25:32] == "0000011":
+            prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+            rs1_current = register_dict_rev[self.binary[12:17]]
+            if prev_rd == rs1_current:
+                return True
+            else:
+                return False
+        elif prev_instrction.binary[25:32] == "0100011":
+            prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+            rs1_current = register_dict_rev[self.binary[12:17]]
+            rs2_current = register_dict_rev[self.binary[7:12]]
+            if prev_rd == rs1_current or prev_rd == rs2_current:
+                return True
+            else:
+                return False
+        elif prev_instrction.binary[25:32] == "0010011":
+            prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+            rs1_current = register_dict_rev[self.binary[12:17]]
+            if prev_rd == rs1_current:
+                return True
+            else:
+                return False
+        elif prev_instrction.binary[25:32] == "0110011":
+            prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+            rs1_current = register_dict_rev[self.binary[12:17]]
+            rs2_current = register_dict_rev[self.binary[7:12]]
+            if prev_rd == rs1_current or prev_rd == rs2_current:
+                return True
+            else:
+                return False
+        else:
             return False
-    def pipeline_implementation(self,prev_instruction,Branch_flag=False):
-        if(prev_instruction.F_starting==-1 or prev_instruction.D_starting==-1): return
+        # prev_rd = register_dict_rev[prev_instrction.binary[12:17]]
 
-        if(Branch_flag==False):
-            self.F_starting=prev_instruction.D_starting
-            self.F_ending=prev_instruction.D_ending
-            if(prev_instruction.Ex==-1):
-                return 
-            self.D_starting=prev_instruction.Ex
-            # if(prev_instruction.binary[25:]=="0000011" or prev_instruction.binary[25:]=="0100011" ):
-            if True:
-                if(self.check_hazard(prev_instruction)):
+        # rs1_current = register_dict_rev[self.binary[20:25]]
+
+        # print(prev_rd, rs1_current)
+        # if prev_rd == rs1_current:
+        #     return True
+        # else:
+        #     return False
+
+    def pipeline_implementation(self, prev_instruction, Branch_flag=False):
+        if prev_instruction.F_starting == -1 or prev_instruction.D_starting == -1:
+            return
+
+        if Branch_flag == False:
+            self.F_starting = prev_instruction.D_starting
+            self.F_ending = prev_instruction.D_ending
+            if prev_instruction.Ex == -1:
+                return
+            self.D_starting = prev_instruction.Ex
+            if (
+                prev_instruction.binary[25:] == "0000011"
+                or prev_instruction.binary[25:] == "0100011"
+            ):
+                if self.check_hazard(prev_instruction):
                     print("here")
-                    self.D_ending=prev_instruction.Mem
+                    self.D_ending = prev_instruction.Mem
                 else:
-                    self.D_ending=prev_instruction.Ex
+                    self.D_ending = prev_instruction.Ex
 
-            elif(prev_instruction.binary[25:]=="1100011"):
-                self.D_ending=self.D_starting
+            elif prev_instruction.binary[25:] == "1100011":
+                self.D_ending = self.D_starting
                 return
             else:
-                self.D_ending=prev_instruction.Ex
-            self.Ex=self.D_ending+1
-            self.Mem=self.Ex+1
-            self.Wr=self.Mem+1
-            
-        else:
-            self.F_starting=prev_instruction.Ex+1
-            self.F_ending=self.F_starting
-            self.D_starting=self.F_ending+1
-            self.D_ending=self.D_starting
-            self.Ex=self.D_ending+1
-            self.Mem=self.Ex+1
-            self.wr=self.Mem+1
+                if self.check_hazard(prev_instruction):
+                    print("here")
+                    self.D_ending = prev_instruction.Wr + 1
+                else:
+                    self.D_ending = prev_instruction.Ex
+            self.Ex = self.D_ending + 1
+            self.Mem = self.Ex + 1
+            self.Wr = self.Mem + 1
 
-# class CPU:
+        else:
+            self.F_starting = prev_instruction.Ex + 1
+            self.F_ending = self.F_starting
+            self.D_starting = self.F_ending + 1
+            self.D_ending = self.D_starting
+            self.Ex = self.D_ending + 1
+            self.Mem = self.Ex + 1
+            self.wr = self.Mem + 1
+
+
+class CPU:
+    pass
+
+
 #     def _init_(self,imem,mem1024):
 #         self.imem = imem
 #         self.fetch = Fetch(imem)
 #         self.decode = Decode(self.imem,reg_val)
-#         self.exec = Execute(opcode_to_instr,self.imem)             
+#         self.exec = Execute(opcode_to_instr,self.imem)
 #         self.memory = Memory(mem1024)
 #         self.write = Writeback()
 
@@ -643,7 +666,6 @@ class Instruction:
 #         self.cycles=self.list_of_instr[-1].Wb
 
 
-    
 #     def typeof(self,inst):
 #       #print(inst)
 #       if(inst[25:30]=="00000" or inst[25:30]=="01000"):
@@ -653,7 +675,7 @@ class Instruction:
 #       else:
 #         return 1
 
-    
+
 #     def execute(self):
 #         ins=0
 #         jmp=0
@@ -701,7 +723,7 @@ class Instruction:
 #             print(self.dmem.RF)
 
 #         for j in range(i,self.cycles+1):
-#           print(self.dmem.RF)  
+#           print(self.dmem.RF)
 #           #print(self.cycles)
 
 #         print(mem_reg)
@@ -719,6 +741,7 @@ class Instruction:
 #           file1.write(string)
 #         file1.write("\n")
 #         file1.close()
+
 
 def pipeline_show(instructions):
     for i in range(0, len(instructions)):
@@ -756,7 +779,7 @@ def main():
     instructions = instruct_mem.list_of_instr()
     instruct_mem.initialize()
     num_instruction = instruct_mem.get_len()
-    
+
     # Create a list to store the instances of the Instruction class
     instruction_list = []
 
@@ -789,38 +812,24 @@ def main():
             jump = immediate
             prev_PC = PC
         if jump == PC:
-            instruction_list[PC].pipeline_implementation(instruction_list[prev_PC], True)
+            instruction_list[PC].pipeline_implementation(
+                instruction_list[prev_PC], True
+            )
         else:
             instruction_list[PC].pipeline_implementation(instruction_list[PC - 1])
-    
+
     # Pass the list of instruction objects to the pipeline_show function
     pipeline_show(instruction_list)
 
+
 main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # def __main__():
 #     IM = Instruction_Memory()
 #     no_instr = IM.initialize()
 #     PC = 0
-    
+
 #     print(no_instr)
 #     memory1024 = [random.randint(0, 255) for _ in range(1024)]
 #     end=0
@@ -833,10 +842,10 @@ main()
 #     for i in range(no_instr):
 #         stage[i] = "F"
 #     cycle=0
-    
+
 #     while end == 0:
 #         # for i in range(no_instr):
-          
+
 #         # print("\n")
 #         print("Cycle",cycle)
 #         cycle+=1
@@ -870,7 +879,7 @@ main()
 #                 pipeline_arr[4] = 1
 #                 # writeback
 #                 stage[i] = ""
-          
+
 #             if stage[no_instr - 1] == "W":
 #                 end = 1
 #         pipeline_arr=[0,0,0,0,0]
@@ -928,7 +937,7 @@ main()
 #             print(self.dmem.RF)
 
 #         for j in range(i,self.cycles+1):
-#           print(self.dmem.RF)  
+#           print(self.dmem.RF)
 #           #print(self.cycles)
 
 #         print(mem_reg)
@@ -946,5 +955,3 @@ main()
 #           file1.write(string)
 #         file1.write("\n")
 #         file1.close()
-
-
