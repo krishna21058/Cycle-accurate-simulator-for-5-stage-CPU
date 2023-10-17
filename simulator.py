@@ -19,6 +19,21 @@ opcode_to_func = {
     "1100": "hlt",
 }
 
+func7 = {
+    "0000000": "SLLI",
+    "0000000": "SRLI",
+    "0100000": "SRAI",
+    "0000000": "ADD",
+    "0100000": "SUB",
+    "0000000": "SLL",
+    "0000000": "SLT",
+    "0000000": "SLTU",
+    "0000000": "XOR",
+    "0000000": "SRL",
+    "0100000": "SRA",
+    "0000000": "OR",
+    "0000000": "AND",
+}
 
 register_dict = {
     "R0": "00000",
@@ -133,19 +148,6 @@ funct3_dict = {
 funct3_dict_rev = {v: k for k, v in funct3_dict.items()}
 
 
-# funct7_dict={
-#     "SUB":"0100000",
-#     "SRA":"0100000",
-#     "SRL":"0000000",
-#     "MUL":"0000001",
-#     "DIV":"0000001",
-#     "SLL":"0000000",
-#     "ADD":"0000000",
-#     "XOR":"0000000",
-#     "OR":"0000000",
-#     "AND":"0000000"
-# }
-
 # opcode to function type
 opcode_to_instr = {
     "0110111": "LUI",
@@ -179,15 +181,16 @@ opcode_to_instr = {
         "100": "XORI",
         "110": "ORI",
         "111": "ANDI",
-    },
-    "0010011": {
         "001": "SLLI",
         "101": "SRLI",
         "101": "SRAI",
     },
     "0110011": {
-        "000": "ADD",
-        "000": "SUB",
+        "000": {
+            # acc to func7
+            "0000000": "ADD",
+            "0100000": "SUB",
+        },
         "001": "SLL",
         "010": "SLT",
         "011": "SLTU",
@@ -197,6 +200,8 @@ opcode_to_instr = {
         "110": "OR",
         "111": "AND",
     },
+    "1111111": "LOADNOC",
+    "0000000": "STORENOC",
 }
 
 
@@ -250,13 +255,13 @@ class Decode:
         self.register_dict = reg_val
         self.immediate = 0
         self.imem = imem
-        self.fetch = Fetch(self.imem)
-        self.binary = self.fetch.sendToDecode()
+        self.binary = ""
         self.rd = ""
         self.rs1 = ""
         self.rs2 = ""
 
-    def decode(self):
+    def decode(self, F):
+        self.binary = F.sendToDecode()
         if self.binary == 0:
             return
         elif self.binary[25:32] == "0110111":
@@ -319,16 +324,19 @@ class Execute:
     def __init__(self, opcode_to_instr, imem):
         self.imem = imem
         self.decode = Decode(self.imem, reg_val)
-        self.decode_result = self.decode.send_to_execute()
+        self.decode_result = []
 
         self.reg_buffer = ""
         self.buf_val = 0
-        self.binary = self.decode_result[-1]
+        self.binary = ""
         self.opcode_to_instr = opcode_to_instr
 
-    def execute(self, PC):
-        print("**************", self.binary)
+    def execute(self, PC, D):
+        self.decode_result = D.send_to_execute()
+        self.binary = self.decode_result[-1]
         opcode = self.binary[25:32]
+        # print(opcode)
+        # print(opcode_to_instr[opcode])
         if self.opcode_to_instr[opcode].__class__ == str:
             func = opcode_to_instr[opcode]
             if func == "LUI":
@@ -338,8 +346,17 @@ class Execute:
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = self.decode_result[3] + PC
                 # reg_val[self.decode_result[0]] = reg_val["R0"] + self.decode_result[3]
+            elif self.binary[25:32] == "LOADNOC":
+                self.reg_buffer = self.decode_result[0]
+                self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
         else:
+            print("********", self.binary[25:32])
+            print("********", self.binary[17:20])
             func = self.opcode_to_instr[opcode][self.binary[17:20]]
+            if func.__class__ == dict:
+                func = self.opcode_to_instr[opcode][self.binary[17:20]][
+                    self.binary[0:7]
+                ]
             if func == "BEQ":
                 if reg_val[self.decode_result[1]] == reg_val[self.decode_result[2]]:
                     PC += self.decode_result[3]
@@ -468,9 +485,6 @@ class Execute:
                 self.buf_val = (
                     reg_val[self.decode_result[1]] & reg_val[self.decode_result[2]]
                 )
-            elif self.binary[25:32] == "1111111":
-                self.reg_buffer = self.decode_result[0]
-                self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
 
         # PC = PC + 4
 
@@ -478,36 +492,37 @@ class Execute:
 
     def send_to_memory(self):
         return [
-            self.rd,
-            self.rs1,
-            self.rs2,
-            self.immediate,
-            self.binary,
             self.reg_buffer,
             self.buf_val,
+            self.binary,
+            self.decode_result[1],
+            self.decode_result[2],
+            self.decode_result[3],
+            self.decode_result[0],
         ]
 
 
 class Memory:
-    def __init__(self, mem):
-        self.execute_result = Execute.send_to_memory()
-        self.binary = self.execute_result[4]
+    def __init__(self):
+        self.execute_result = []
+        self.binary = ""
         self.loadval = 0
         self.loadreg = ""
-        self.mem1024 = mem
 
-    def execute(self):
+    def execute(self, E):
+        self.execute_result = E.send_to_memory()
+        self.binary = self.execute_result[4]
         opcode = self.binary[25:32]
         if opcode == "0100011":
             # store
             mem_addr = self.execute_result[6]
             data_to_store = reg_val[self.execute_result[5]]
-            self.mem1024[mem_addr] = data_to_store
+            memory1024[mem_addr] = data_to_store
         # check whether writeback or memory stage
         elif opcode == "0000011":
             # load
             mem_addr = self.execute_result[6]
-            reg_val[self.execute_result[5]] = self.mem1024[mem_addr]
+            reg_val[self.execute_result[5]] = memory1024[mem_addr]
         elif opcode == "1111111":
             # print("here")
             mem_addr = self.execute_result[6]
@@ -529,14 +544,20 @@ class Memory:
 
 class Writeback:
     def __init__(self):
-        self.memory_result = Memory.send_to_writeback()
+        self.memory_result = []
+        self.binary = ""
+        self.loadval = 0
+        self.loadreg = ""
+        self.reg_buffer = ""
+        self.buf_val = 0
+
+    def writeback(self, M):
+        self.memory_result = M.send_to_writeback()
         self.binary = self.memory_result[2]
         self.loadval = self.memory_result[0]
         self.loadreg = self.memory_result[1]
         self.reg_buffer = self.memory_result[3]
         self.buf_val = self.memory_result[4]
-
-    def writeback(self):
         opcode = self.binary[25:32]
         if opcode == "0000011":
             # load
@@ -650,99 +671,6 @@ class Instruction:
             self.wr = self.Mem + 1
 
 
-class CPU:
-    pass
-
-
-#     def _init_(self,imem,mem1024):
-#         self.imem = imem
-#         self.fetch = Fetch(imem)
-#         self.decode = Decode(self.imem,reg_val)
-#         self.exec = Execute(opcode_to_instr,self.imem)
-#         self.memory = Memory(mem1024)
-#         self.write = Writeback()
-
-#         self.list_of_instr=imem.list_of_instr
-#         self.cycles=self.list_of_instr[-1].Wb
-
-
-#     def typeof(self,inst):
-#       #print(inst)
-#       if(inst[25:30]=="00000" or inst[25:30]=="01000"):
-#         return 0
-#       elif (inst[25:30]=="11000"):
-#         return 2
-#       else:
-#         return 1
-
-
-#     def execute(self):
-#         ins=0
-#         jmp=0
-#         file1= open("drive/MyDrive/CA_test/log.txt","w")
-#         for i in range(self.cycles):
-#             if(ins>=len(self.l)):
-#               break
-#             curr_inst=self.l[ins]
-#             if(self.typeof(curr_inst.instr)==1):
-#               temp=curr_inst.x_start
-#             elif(self.typeof(curr_inst.instr)==2):
-#               temp=curr_inst.x_start
-#               offset=curr_inst.instr[0]+curr_inst.instr[24]+curr_inst.instr[1:7]+curr_inst.instr[20:24]
-#               offset=int(offset,2)
-#               jmp=offset
-#             elif(ins>0 and self.typeof(curr_inst.instr)==0 and is_in_use(self.l[ins-1].instr,curr_inst.instr)):
-#               temp=curr_inst.m_start
-#             elif(self.typeof(curr_inst.instr)==0):
-#               temp=curr_inst.x_start
-#             if(i==temp):
-#               if(jmp==0):
-#                 self.F.execute(ins,self.imem)
-#                 self.D.decode(self.F,ins)
-#                 self.X.execute(self.D,ins)
-#                 #if(ins==1):
-#                   #pdb.set_trace()
-#                 self.M.execute(self.X)
-#                 self.W.execute(self.M)
-#                 ins+=1
-#               else:
-#                 self.F.execute(ins,self.imem)
-#                 self.D.decode(self.F,ins)
-#                 self.X.execute(self.D,ins)
-#                 self.M.execute(self.X)
-#                 self.W.execute(self.M)
-#                 ins=jmp
-#                 jmp=0
-#             string="Clock cycle -"+str(i)+"\n"
-#             file1.write(string)
-#             ls=self.dmem.RF
-#             for k in ls:
-#               string=str(k)+"\n"
-#               file1.write(string)
-#             file1.write("\n")
-#             print(self.dmem.RF)
-
-#         for j in range(i,self.cycles+1):
-#           print(self.dmem.RF)
-#           #print(self.cycles)
-
-#         print(mem_reg)
-
-#         file1.write("final data memory state \n")
-#         ls=self.dmem.RF
-#         for k in ls:
-#           string=str(k)+"\n"
-#           file1.write(string)
-#         file1.write("\n")
-#         file1.write("instruction memory state \n")
-#         ls=self.imem.memory
-#         for k in ls:
-#           string=str(k)+"\n"
-#           file1.write(string)
-#         file1.write("\n")
-#         file1.close()
-
-
 def pipeline_show(instructions):
     for i in range(0, len(instructions)):
         obj = instructions[i]
@@ -820,138 +748,81 @@ def main():
 
     # Pass the list of instruction objects to the pipeline_show function
     pipeline_show(instruction_list)
+    branch_imm = 0
+    cycles = instruction_list[-1].Wr + 1
+    instruction_var = 0
+
+    flog = open("log.txt", "w")
+    for i in range(cycles):
+        if instruction_var >= len(instruction_list):
+            break
+        curr_instruction = instruction_list[instruction_var]
+        # type 0 - load store
+        # type 1 - rest instructions
+        # type 2 - branch instructions
+        if (
+            curr_instruction.binary[25:32] == "0000011"
+            or curr_instruction.binary[25:32] == "0100011"
+        ):  # type 0
+            if instruction_var > 0 and curr_instruction.check_hazard(
+                instruction_list[instruction_var - 1]
+            ):
+                flag = curr_instruction.Mem
+            else:
+                flag = curr_instruction.Ex
+        elif curr_instruction.binary[25:32] == "1100011":
+            immediate = int(
+                instructions[PC][0]
+                + instructions[PC][24]
+                + instructions[PC][1:7]
+                + instructions[PC][20:24],
+                2,
+            )
+            branch_imm = immediate
+            flag = curr_instruction.Ex
+        else:
+            flag = curr_instruction.Ex
+
+        if flag == i:
+            if branch_imm != 0:
+                f = Fetch(instruct_mem)
+                f.execute(instruction_var)
+                dec = Decode(instruct_mem, reg_val)
+                dec.decode(f)
+                ex = Execute(opcode_to_instr, instruct_mem)
+                ex.execute(PC, dec)
+                mem = Memory()
+                mem.execute(ex)
+                wb = Writeback()
+                wb.writeback(mem)
+                instruction_var = branch_imm
+                branch_imm = 0
+            else:
+                f = Fetch(instruct_mem)
+                f.fetch(instruction_var)
+                dec = Decode(instruct_mem, reg_val)
+                dec.decode(f)
+                ex = Execute(opcode_to_instr, instruct_mem)
+                ex.execute(PC, dec)
+                mem = Memory()
+                mem.execute(ex)
+                wb = Writeback()
+                wb.writeback(mem)
+                instruction_var += 1
+        string = "Clock cycle -" + str(i) + "\n"
+        flog.write(string)
+        for reg in reg_val:
+            to_write = str(reg) + " : " + str(reg_val[reg]) + "\n"
+            flog.write(to_write)
+        flog.write("\n")
+
+    for i in range(len(memory1024)):
+        to_write = str(i) + " : " + str(memory1024[i]) + "\n"
+        flog.write(to_write)
+    for i in memmap_reg.items():
+        to_write = str(i[0]) + " : " + str(i[1]) + "\n"
+        flog.write(to_write)
+    flog.close()
 
 
 main()
-
-
-# def __main__():
-#     IM = Instruction_Memory()
-#     no_instr = IM.initialize()
-#     PC = 0
-
-#     print(no_instr)
-#     memory1024 = [random.randint(0, 255) for _ in range(1024)]
-#     end=0
-
-#     pipeline_arr = [0, 0, 0, 0, 0]
-#     no_instr=5
-#     end=0
-#     i = 0
-#     stage = {}
-#     for i in range(no_instr):
-#         stage[i] = "F"
-#     cycle=0
-
-#     while end == 0:
-#         # for i in range(no_instr):
-
-#         # print("\n")
-#         print("Cycle",cycle)
-#         cycle+=1
-#         for i in range(0,len(stage)):
-#             print(i, stage[i])
-
-#         for i in range(no_instr):
-#             # instruc = inst_mem.getData(i)
-#             if stage[i] == "F" and pipeline_arr[0] == 0:
-
-#                 pipeline_arr[0] = 1
-#                 stage[i] = "D"
-
-#             elif stage[i] == "D" and pipeline_arr[1] == 0:
-#                 # decode
-#                 pipeline_arr[1] = 1
-#                 stage[i] = "X"
-
-#             elif stage[i] == "X" and pipeline_arr[2] == 0:
-#                 # execute
-#                 pipeline_arr[2] = 1
-#                 stage[i] = "M"
-
-#             elif stage[i] == "M" and pipeline_arr[3] == 0:
-#                 # memory
-#                 pipeline_arr[3] = 1
-#                 stage[i] = "W"
-
-#             elif stage[i] == "W" and pipeline_arr[4] == 0:
-
-#                 pipeline_arr[4] = 1
-#                 # writeback
-#                 stage[i] = ""
-
-#             if stage[no_instr - 1] == "W":
-#                 end = 1
-#         pipeline_arr=[0,0,0,0,0]
-#         print("\n")
-#     print("Cycle",cycle)
-#     for i in range(0,len(stage)):
-#       print(i, stage[i])
-
-# __main__()
-
-#     def execute(self):
-#         ins=0
-#         jmp=0
-#         file1= open("drive/MyDrive/CA_test/log.txt","w")
-#         for i in range(self.cycles):
-#             if(ins>=len(self.l)):
-#               break
-#             curr_inst=self.l[ins]
-#             if(self.typeof(curr_inst.instr)==1):
-#               temp=curr_inst.x_start
-#             elif(self.typeof(curr_inst.instr)==2):
-#               temp=curr_inst.x_start
-#               offset=curr_inst.instr[0]+curr_inst.instr[24]+curr_inst.instr[1:7]+curr_inst.instr[20:24]
-#               offset=int(offset,2)
-#               jmp=offset
-#             elif(ins>0 and self.typeof(curr_inst.instr)==0 and is_in_use(self.l[ins-1].instr,curr_inst.instr)):
-#               temp=curr_inst.m_start
-#             elif(self.typeof(curr_inst.instr)==0):
-#               temp=curr_inst.x_start
-#             if(i==temp):
-#               if(jmp==0):
-#                 self.F.execute(ins,self.imem)
-#                 self.D.decode(self.F,ins)
-#                 self.X.execute(self.D,ins)
-#                 #if(ins==1):
-#                   #pdb.set_trace()
-#                 self.M.execute(self.X)
-#                 self.W.execute(self.M)
-#                 ins+=1
-#               else:
-#                 self.F.execute(ins,self.imem)
-#                 self.D.decode(self.F,ins)
-#                 self.X.execute(self.D,ins)
-#                 self.M.execute(self.X)
-#                 self.W.execute(self.M)
-#                 ins=jmp
-#                 jmp=0
-#             string="Clock cycle -"+str(i)+"\n"
-#             file1.write(string)
-#             ls=self.dmem.RF
-#             for k in ls:
-#               string=str(k)+"\n"
-#               file1.write(string)
-#             file1.write("\n")
-#             print(self.dmem.RF)
-
-#         for j in range(i,self.cycles+1):
-#           print(self.dmem.RF)
-#           #print(self.cycles)
-
-#         print(mem_reg)
-
-#         file1.write("final data memory state \n")
-#         ls=self.dmem.RF
-#         for k in ls:
-#           string=str(k)+"\n"
-#           file1.write(string)
-#         file1.write("\n")
-#         file1.write("instruction memory state \n")
-#         ls=self.imem.memory
-#         for k in ls:
-#           string=str(k)+"\n"
-#           file1.write(string)
-#         file1.write("\n")
-#         file1.close()
