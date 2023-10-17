@@ -210,14 +210,14 @@ class Instruction_Memory:
         self.memory = list()
 
     def initialize(self):
-        f = open("binary.txt", "r")
+        f = open("binary_hazards.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
         n = len(bin_instr)
         self.memory = bin_instr[0 : n - 1]
 
     def list_of_instr(self):
-        f = open("binary.txt", "r")
+        f = open("binary_hazards.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
 
@@ -228,7 +228,7 @@ class Instruction_Memory:
         return self.memory[row]
 
     def get_len(sef):
-        f = open("binary.txt", "r")
+        f = open("binary_hazards.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
         return len(bin_instr) - 1
@@ -529,7 +529,7 @@ class Memory:
         elif opcode == "1111111":
             # print("here")
             mem_addr = self.execute_result[1]
-            if mem_addr >= 1025 and mem_addr <= 1028:
+            if mem_addr >= 1025 and mem_addr <= 1028: 
                 data_to_store = reg_val[self.execute_result[0]]
                 memmap_reg[str(mem_addr)] = data_to_store
         elif opcode == "0000000":
@@ -589,11 +589,13 @@ class Instruction:
         self.Mem = -1
         self.Wr = -1
 
-    def check_hazard(prev_instrction, self):
+    def check_hazard(self,prev_instrction):
+        
         if prev_instrction.binary[25:32] == "1100011":
             prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
             rs1_current = register_dict_rev[self.binary[12:17]]
             rs2_current = register_dict_rev[self.binary[7:12]]
+            
             if prev_rd == rs1_current or prev_rd == rs2_current:
                 return True
             else:
@@ -601,6 +603,7 @@ class Instruction:
         elif prev_instrction.binary[25:32] == "0000011":
             prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
             rs1_current = register_dict_rev[self.binary[12:17]]
+            
             if prev_rd == rs1_current:
                 return True
             else:
@@ -609,13 +612,15 @@ class Instruction:
             prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
             rs1_current = register_dict_rev[self.binary[12:17]]
             rs2_current = register_dict_rev[self.binary[7:12]]
+            
             if prev_rd == rs1_current or prev_rd == rs2_current:
                 return True
-            else:
+            else: 
                 return False
         elif prev_instrction.binary[25:32] == "0010011":
             prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
             rs1_current = register_dict_rev[self.binary[12:17]]
+            
             if prev_rd == rs1_current:
                 return True
             else:
@@ -624,6 +629,7 @@ class Instruction:
             prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
             rs1_current = register_dict_rev[self.binary[12:17]]
             rs2_current = register_dict_rev[self.binary[7:12]]
+            
             if prev_rd == rs1_current or prev_rd == rs2_current:
                 return True
             else:
@@ -641,14 +647,15 @@ class Instruction:
         #     return False
 
     def pipeline_implementation(self, prev_instruction, Branch_flag=False):
-        if prev_instruction.F_starting == -1 or prev_instruction.D_starting == -1:
-            return
-
+        # if prev_instruction.F_starting == -1 or prev_instruction.D_starting == -1:
+        #     return
+        # print("####",prev_instruction.binary,self.binary)
         if Branch_flag == False:
+            
             self.F_starting = prev_instruction.D_starting
             self.F_ending = prev_instruction.D_ending
-            if prev_instruction.Ex == -1:
-                return
+            # if prev_instruction.Ex == -1:
+            #     return
             self.D_starting = prev_instruction.Ex
             if (
                 prev_instruction.binary[25:] == "0000011"
@@ -664,6 +671,7 @@ class Instruction:
                 return
             else:
                 if self.check_hazard(prev_instruction):
+                    
                     self.D_ending = prev_instruction.Wr + 1
                 else:
                     self.D_ending = prev_instruction.Ex
@@ -680,7 +688,6 @@ class Instruction:
             self.Mem = self.Ex + 1
             self.wr = self.Mem + 1
             return
-
 
 def pipeline_show(instructions):
     for i in range(0, len(instructions)):
@@ -748,7 +755,7 @@ def main():
                 2,
             )
 
-            jump = immediate
+            jump = immediate-1
             prev_PC = PC
         if jump == PC:
             instruction_list[PC].pipeline_implementation(
@@ -764,6 +771,9 @@ def main():
     instruction_var = 0
 
     flog = open("log.txt", "w")
+    flog.write("Number of cycles : "+str(cycles))
+    flog.write("\n")
+    flog.write("\n")
     for i in range(cycles):
         if instruction_var >= len(instruction_list):
             break
@@ -782,14 +792,16 @@ def main():
             else:
                 flag = curr_instruction.Ex
         elif curr_instruction.binary[25:32] == "1100011":
+            
             immediate = int(
-                instructions[PC][0]
-                + instructions[PC][24]
-                + instructions[PC][1:7]
-                + instructions[PC][20:24],
+                curr_instruction.binary[0]
+                + curr_instruction.binary[24]
+                + curr_instruction.binary[1:7]
+                + curr_instruction.binary[20:24],
                 2,
             )
             branch_imm = immediate
+            
             flag = curr_instruction.Ex
         else:
             flag = curr_instruction.Ex
@@ -812,7 +824,7 @@ def main():
                 f = Fetch(instruct_mem)
                 f.fetch(instruction_var)
                 dec = Decode(instruct_mem, reg_val)
-                dec.decode(f)
+                dec.decode(f)    
                 ex = Execute(opcode_to_instr, instruct_mem)
                 ex.execute(PC, dec)
                 mem = Memory()
@@ -825,11 +837,16 @@ def main():
         for reg in reg_val:
             to_write = str(reg) + " : " + str(reg_val[reg]) + "\n"
             flog.write(to_write)
+        
+        flog.write("\n")
+        flog.write("PC: "+str(i*4))
         flog.write("\n")
 
     for i in range(len(memory1024)):
         to_write = str(i) + " : " + str(memory1024[i]) + "\n"
         flog.write(to_write)
+    flog.write("\n")
+    flog.write("Memory Mapped Registers: "+"\n")
     for i in memmap_reg.items():
         to_write = str(i[0]) + " : " + str(i[1]) + "\n"
         flog.write(to_write)
