@@ -688,26 +688,32 @@ class Instruction:
             self.wr = self.Mem + 1
             return
 
+flog = open("log.txt", "w")
 def pipeline_show(instructions):
+    temp=""
     for i in range(0, len(instructions)):
         obj = instructions[i]
         str_line = " " * obj.F_starting
         print()
+        temp+="\n"
         if obj.F_starting == -1:
             str_line = "- " * 5
             print(str_line)
+            temp+=str_line
             continue
         str_F = "F" * (obj.F_ending - obj.F_starting + 1)
         str_line += str_F
         if obj.D_starting == -1:
             str_line += "- " * 4
             print(str_line)
+            temp+=str_line
             continue
         str_D = "D" * (obj.D_ending - obj.D_starting + 1)
         str_line += str_D
         if obj.Ex == -1:
             str_line += "- " * 3
             print(str_line)
+            temp+=str_line
             continue
         str_X = "X"
         str_line += str_X
@@ -716,10 +722,10 @@ def pipeline_show(instructions):
         str_W = "W"
         str_line += str_W
         print(str_line)
-
-
+        temp+=str_line
+    flog.write(temp+"\n")
 def main():
-    flog = open("log.txt", "w")
+    
     for i in range(len(memory1024)):
         to_write = str(i) + " : " + str(memory1024[i]) + "\n"
         flog.write(to_write)
@@ -795,22 +801,50 @@ def main():
                 flag = curr_instruction.Mem
             else:
                 flag = curr_instruction.Ex
-        elif curr_instruction.binary[25:32] == "1100011":
+        # elif curr_instruction.binary[25:32] == "1100011":
 
-            immediate = int(
-                curr_instruction.binary[0]
-                + curr_instruction.binary[24]
-                + curr_instruction.binary[1:7]
-                + curr_instruction.binary[20:24],
-                2,
-            )
-            branch_imm = immediate
+        #     immediate = int(
+        #         curr_instruction.binary[0]
+        #         + curr_instruction.binary[24]
+        #         + curr_instruction.binary[1:7]
+        #         + curr_instruction.binary[20:24],
+        #         2,
+        #     )
+        #     branch_imm = immediate
             
-            flag = curr_instruction.Ex
+        #     flag = curr_instruction.Ex
+
+        elif curr_instruction.binary[25:32] == "1100011":
+            if curr_instruction.binary[17:20]=="000":
+                if(reg_val[register_dict_rev[curr_instruction.binary[12:17]]]==reg_val[register_dict_rev[curr_instruction.binary[7:12]]]):
+                    immediate = int(
+                        curr_instruction.binary[0]
+                        + curr_instruction.binary[24]
+                        + curr_instruction.binary[1:7]
+                        + curr_instruction.binary[20:24],
+                        2,
+                    )
+                    branch_imm = immediate
+                    
+                    flag = curr_instruction.Ex
+            elif curr_instruction.binary[17:20]=="001":
+                if(reg_val[register_dict_rev[curr_instruction.binary[12:17]]]!=reg_val[register_dict_rev[curr_instruction.binary[7:12]]]):
+                    immediate = int(
+                        curr_instruction.binary[0]
+                        + curr_instruction.binary[24]
+                        + curr_instruction.binary[1:7]
+                        + curr_instruction.binary[20:24],
+                        2,
+                    )
+                    branch_imm = immediate
+                    
+                    flag = curr_instruction.Ex
+            
         else:
             flag = curr_instruction.Ex
-
+        
         if flag == i:
+
             if branch_imm != 0:
                 f = Fetch(instruct_mem)
                 f.fetch(instruction_var)
@@ -825,7 +859,6 @@ def main():
                 wb = Writeback()
                 wb.writeback(mem)
                 instruction_var = branch_imm-1
-                branch_pc=branch_imm
                 branch_imm = 0
             else:
                 f = Fetch(instruct_mem)
@@ -847,13 +880,13 @@ def main():
             flog.write(to_write)
         
         
-        if(branch_pc!=0): 
-            flog.write("PC: "+str(branch_pc*4))
-            flog.write("\n")
-            branch_pc=0
-        else :
-            flog.write("PC: "+str(instruction_var*4))
-            flog.write("\n")
+        # if(branch_pc!=0): 
+        #     flog.write("PC: "+str(branch_pc*4))
+        #     flog.write("\n")
+        #     branch_pc=0
+        # else :
+        flog.write("PC: "+str(instruction_var*4))
+        flog.write("\n")
 
         flog.write("\n")
 
