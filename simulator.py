@@ -71,9 +71,7 @@ register_dict = {
 }
 # reverse this dictionary
 register_dict_rev = {v: k for k, v in register_dict.items()}
-# print(register_dict_rev)
 
-# initialise all register values to 0
 reg_val = {
     "R0": 1,
     "R1": 1,
@@ -338,8 +336,7 @@ class Execute:
         self.decode_result = D.send_to_execute()
         self.binary = self.decode_result[-1]
         opcode = self.binary[25:32]
-        # print(opcode)
-        # print(opcode_to_instr[opcode])
+        
         if self.opcode_to_instr[opcode].__class__ == str:
             func = opcode_to_instr[opcode]
             if func == "LUI":
@@ -353,8 +350,7 @@ class Execute:
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
         else:
-            # print("********", self.binary[25:32])
-            # print("********", self.binary[17:20])
+     
             func = self.opcode_to_instr[opcode][self.binary[17:20]]
             if func.__class__ == dict:
                 func = self.opcode_to_instr[opcode][self.binary[17:20]][
@@ -513,13 +509,16 @@ class Memory:
         self.loadreg = ""
 
     def execute(self, E):
+        
         self.execute_result = E.send_to_memory()
         self.binary = self.execute_result[2]
         opcode = self.binary[25:32]
+      
         if opcode == "0100011":
             # store
             mem_addr = self.execute_result[1]
             data_to_store = reg_val[self.execute_result[0]]
+    
             memory1024[mem_addr] = data_to_store
         # check whether writeback or memory stage
         elif opcode == "0000011":
@@ -527,7 +526,7 @@ class Memory:
             mem_addr = self.execute_result[1]
             reg_val[self.execute_result[0]] = memory1024[mem_addr]
         elif opcode == "1111111":
-            # print("here")
+       
             mem_addr = self.execute_result[1]
             if mem_addr >= 1025 and mem_addr <= 1028: 
                 data_to_store = reg_val[self.execute_result[0]]
@@ -720,6 +719,11 @@ def pipeline_show(instructions):
 
 
 def main():
+    flog = open("log.txt", "w")
+    for i in range(len(memory1024)):
+        to_write = str(i) + " : " + str(memory1024[i]) + "\n"
+        flog.write(to_write)
+    flog.write("\n")
     instruct_mem = Instruction_Memory()
     PC = 0
     instructions = instruct_mem.list_of_instr()
@@ -770,21 +774,21 @@ def main():
     cycles = instruction_list[-1].Wr + 1
     instruction_var = 0
 
-    flog = open("log.txt", "w")
+   
     flog.write("Number of cycles : "+str(cycles))
     flog.write("\n")
     flog.write("\n")
+    branch_pc=0
+    PC=0
     for i in range(cycles):
         if instruction_var >= len(instruction_list):
             break
         curr_instruction = instruction_list[instruction_var]
-        # type 0 - load store
-        # type 1 - rest instructions
-        # type 2 - branch instructions
+       
         if (
             curr_instruction.binary[25:32] == "0000011"
             or curr_instruction.binary[25:32] == "0100011"
-        ):  # type 0
+        ): 
             if instruction_var > 0 and curr_instruction.check_hazard(
                 instruction_list[instruction_var - 1]
             ):
@@ -792,7 +796,7 @@ def main():
             else:
                 flag = curr_instruction.Ex
         elif curr_instruction.binary[25:32] == "1100011":
-            
+
             immediate = int(
                 curr_instruction.binary[0]
                 + curr_instruction.binary[24]
@@ -814,11 +818,14 @@ def main():
                 dec.decode(f)
                 ex = Execute(opcode_to_instr, instruct_mem)
                 ex.execute(PC, dec)
+
                 mem = Memory()
                 mem.execute(ex)
+              
                 wb = Writeback()
                 wb.writeback(mem)
-                instruction_var = branch_imm
+                instruction_var = branch_imm-1
+                branch_pc=branch_imm
                 branch_imm = 0
             else:
                 f = Fetch(instruct_mem)
@@ -829,6 +836,7 @@ def main():
                 ex.execute(PC, dec)
                 mem = Memory()
                 mem.execute(ex)
+               
                 wb = Writeback()
                 wb.writeback(mem)
                 instruction_var += 1
@@ -838,9 +846,17 @@ def main():
             to_write = str(reg) + " : " + str(reg_val[reg]) + "\n"
             flog.write(to_write)
         
+        
+        if(branch_pc!=0): 
+            flog.write("PC: "+str(branch_pc*4))
+            flog.write("\n")
+            branch_pc=0
+        else :
+            flog.write("PC: "+str(instruction_var*4))
+            flog.write("\n")
+
         flog.write("\n")
-        flog.write("PC: "+str(i*4))
-        flog.write("\n")
+
 
     for i in range(len(memory1024)):
         to_write = str(i) + " : " + str(memory1024[i]) + "\n"
