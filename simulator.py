@@ -213,16 +213,16 @@ class Instruction_Memory:
         f = open("binary.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
-        n=len(bin_instr)
-        self.memory = bin_instr[0:n-1]
+        n = len(bin_instr)
+        self.memory = bin_instr[0 : n - 1]
 
     def list_of_instr(self):
         f = open("binary.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
-        print(bin_instr)
-        n=len(bin_instr)
-        return bin_instr[0:n-1]
+
+        n = len(bin_instr)
+        return bin_instr[0 : n - 1]
 
     def getData(self, row):
         return self.memory[row]
@@ -231,7 +231,7 @@ class Instruction_Memory:
         f = open("binary.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
-        return len(bin_instr)-1
+        return len(bin_instr) - 1
 
 
 PC = 0
@@ -353,8 +353,8 @@ class Execute:
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
         else:
-            print("********", self.binary[25:32])
-            print("********", self.binary[17:20])
+            # print("********", self.binary[25:32])
+            # print("********", self.binary[17:20])
             func = self.opcode_to_instr[opcode][self.binary[17:20]]
             if func.__class__ == dict:
                 func = self.opcode_to_instr[opcode][self.binary[17:20]][
@@ -566,10 +566,15 @@ class Writeback:
         #     # load
         #     print("first",self.loadreg, self.loadval)
         #     reg_val[self.loadreg] = self.loadval
-        if opcode == "1111111" or opcode=="0100011" or opcode== "0000011" or opcode=="0000000" or opcode=="1100011":
+        if (
+            opcode == "1111111"
+            or opcode == "0100011"
+            or opcode == "0000011"
+            or opcode == "0000000"
+            or opcode == "1100011"
+        ):
             pass
-        else: 
-            print(self.reg_buffer, self.buf_val)
+        else:
             reg_val[self.reg_buffer] = self.buf_val
 
 
@@ -650,7 +655,6 @@ class Instruction:
                 or prev_instruction.binary[25:] == "0100011"
             ):
                 if self.check_hazard(prev_instruction):
-                    print("here")
                     self.D_ending = prev_instruction.Mem
                 else:
                     self.D_ending = prev_instruction.Ex
@@ -660,7 +664,6 @@ class Instruction:
                 return
             else:
                 if self.check_hazard(prev_instruction):
-                    print("here")
                     self.D_ending = prev_instruction.Wr + 1
                 else:
                     self.D_ending = prev_instruction.Ex
@@ -676,6 +679,7 @@ class Instruction:
             self.Ex = self.D_ending + 1
             self.Mem = self.Ex + 1
             self.wr = self.Mem + 1
+            return
 
 
 def pipeline_show(instructions):
@@ -793,7 +797,7 @@ def main():
         if flag == i:
             if branch_imm != 0:
                 f = Fetch(instruct_mem)
-                f.execute(instruction_var)
+                f.fetch(instruction_var)
                 dec = Decode(instruct_mem, reg_val)
                 dec.decode(f)
                 ex = Execute(opcode_to_instr, instruct_mem)
