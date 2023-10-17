@@ -213,13 +213,16 @@ class Instruction_Memory:
         f = open("binary.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
-        self.memory = bin_instr
+        n=len(bin_instr)
+        self.memory = bin_instr[0:n-1]
 
     def list_of_instr(self):
         f = open("binary.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
-        return bin_instr
+        print(bin_instr)
+        n=len(bin_instr)
+        return bin_instr[0:n-1]
 
     def getData(self, row):
         return self.memory[row]
@@ -228,7 +231,7 @@ class Instruction_Memory:
         f = open("binary.txt", "r")
         data = f.read()
         bin_instr = data.split("\n")
-        return len(bin_instr)
+        return len(bin_instr)-1
 
 
 PC = 0
@@ -494,11 +497,11 @@ class Execute:
         return [
             self.reg_buffer,
             self.buf_val,
-            self.binary,
-            self.decode_result[1],
-            self.decode_result[2],
-            self.decode_result[3],
-            self.decode_result[0],
+            self.binary
+            # self.decode_result[1],
+            # self.decode_result[2],
+            # self.decode_result[3],
+            # self.decode_result[0],
         ]
 
 
@@ -511,23 +514,23 @@ class Memory:
 
     def execute(self, E):
         self.execute_result = E.send_to_memory()
-        self.binary = self.execute_result[4]
+        self.binary = self.execute_result[2]
         opcode = self.binary[25:32]
         if opcode == "0100011":
             # store
-            mem_addr = self.execute_result[6]
-            data_to_store = reg_val[self.execute_result[5]]
+            mem_addr = self.execute_result[1]
+            data_to_store = reg_val[self.execute_result[0]]
             memory1024[mem_addr] = data_to_store
         # check whether writeback or memory stage
         elif opcode == "0000011":
             # load
-            mem_addr = self.execute_result[6]
-            reg_val[self.execute_result[5]] = memory1024[mem_addr]
+            mem_addr = self.execute_result[1]
+            reg_val[self.execute_result[0]] = memory1024[mem_addr]
         elif opcode == "1111111":
             # print("here")
-            mem_addr = self.execute_result[6]
+            mem_addr = self.execute_result[1]
             if mem_addr >= 1025 and mem_addr <= 1028:
-                data_to_store = reg_val[self.execute_result[5]]
+                data_to_store = reg_val[self.execute_result[0]]
                 memmap_reg[str(mem_addr)] = data_to_store
         elif opcode == "0000000":
             memmap_reg["1029"] = 1
@@ -537,8 +540,8 @@ class Memory:
             self.loadval,
             self.loadreg,
             self.binary,
-            self.execute_result[5],
-            self.execute_result[6],
+            self.execute_result[0],
+            self.execute_result[1],
         ]
 
 
@@ -559,10 +562,14 @@ class Writeback:
         self.reg_buffer = self.memory_result[3]
         self.buf_val = self.memory_result[4]
         opcode = self.binary[25:32]
-        if opcode == "0000011":
-            # load
-            reg_val[self.loadreg] = self.loadval
-        else:
+        # if opcode == "0000011":
+        #     # load
+        #     print("first",self.loadreg, self.loadval)
+        #     reg_val[self.loadreg] = self.loadval
+        if opcode == "1111111" or opcode=="0100011" or opcode== "0000011" or opcode=="0000000" or opcode=="1100011":
+            pass
+        else: 
+            print(self.reg_buffer, self.buf_val)
             reg_val[self.reg_buffer] = self.buf_val
 
 
