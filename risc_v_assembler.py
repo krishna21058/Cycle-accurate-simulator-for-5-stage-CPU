@@ -4,11 +4,9 @@ import sys
 
 instructions = []
 
-input_file_path = "input1.txt"
-output_file_path = "binary.txt"
+input_file_path = "test_hazards.txt"
+output_file_path = "binary_hazards.txt"
 
-# Read input file and convert the instructions
-# to a format that is easy to handle.
 instructions = dict()
 # srcCode = dict()
 lineCount = 0
@@ -24,13 +22,9 @@ with open(input_file_path, "r") as file:
 
         lineCount += 1
 
-
+print("\n")
 print(instructions)
-
-
-# inst=input.upper().split()
-# instructions.append(inst)
-# print(instructions)
+print("\n")
 
 register_dict = {
     "R0": "00000",
@@ -66,34 +60,6 @@ register_dict = {
     "R30": "11110",
     "R31": "11111",
 }
-
-
-# type = [
-#     {
-#         "LUI": "0110111",
-#         "AUIPC": "0010111",
-#     }, {
-#         "JAL": "1101111",
-#         "rs": "11000",
-#         "ls": "11001",
-#         "movf": "00010"
-#     }, {
-#         "mov": "10011",
-#         "div": "10111",
-#         "not": "11101",
-#         "cmp": "11110"
-#     }, {
-#         "ld": "10100",
-#         "st": "10101"
-#     }, {
-#         "jmp": "11111",
-#         "jlt": "01100",
-#         "jgt": "01101",
-#         "je": "01111"
-#     }, {
-#         "hlt": "01010"
-#     }
-# ]
 
 
 type_dict = {
@@ -225,11 +191,11 @@ def storenoc(i):
 
 
 def main(instructions):
-    with open(output_file_path, "r+") as file:
+    with open(output_file_path, "w") as file:
         file.truncate()
     for i in instructions:
+
         if type_dict[instructions[i][0]] == "U":
-            # pass
             print(U_type(i))
         elif type_dict[instructions[i][0]] == "UJ":
             print(UJ_type(i))
@@ -248,15 +214,33 @@ def main(instructions):
 
 
 def U_type(i):
-    assert len(i) == 3, "Wrong Instruction"
-    assert i[0] == "LUI" or i[0] == "AUIPC", "Wrong Instruction"
-    assert i[1] in register_dict, "Wrong Instruction"
-    if i[0] == "LUI":
+    assert len(instructions[i]) == 3, "Wrong Instruction"
+    assert instructions[i][0] == "LUI" or instructions[i][0] == "AUIPC", "Wrong Instruction"
+    assert instructions[i][1] in register_dict, "Wrong Instruction"
+
+    if instructions[i][0] == "LUI":
         opcode = "0110111"
-    elif i[0] == "AUIPC":
+    elif instructions[i][0] == "AUIPC":
         opcode = "0010111"
-    rd = register_dict[i[1]]
-    imm = bin(i[2]).replace("0b", "")
+    rd = register_dict[instructions[i][1]]
+    val = int(instructions[i][2])
+    imm = bin(val)[2:].zfill(20)
+    if val < 0:
+        abs_value = abs(val)
+        imm = bin(abs_value)[2:].zfill(20)
+        inverted_binary = "".join("1" if bit == "0" else "0" for bit in imm)
+
+        carry = 1
+        result = []
+        for bit in reversed(inverted_binary):
+            if bit == "0":
+                result.insert(0, str(carry))
+                carry = 0
+            else:
+                result.insert(0, "1" if carry == 0 else "0")
+
+        imm = "".join(result)
+
     ans = imm + rd + opcode
     with open(output_file_path, "a") as file:
         file.write(ans)
@@ -273,7 +257,7 @@ def UJ_type(i):
         inst += it
     opcode = "1101111"
     rd = register_dict[i[1]]
-    val = int(i[3])
+    val = int(instructions[i][3])
     imm = bin(val)[2:].zfill(12)
     if val < 0:
         abs_value = abs(val)
@@ -290,7 +274,7 @@ def UJ_type(i):
                 result.insert(0, "1" if carry == 0 else "0")
 
         imm = "".join(result)
-    imm = imm[::-1]
+
     ans = imm + rd + opcode
     with open(output_file_path, "a") as file:
         file.write(ans)
@@ -390,13 +374,12 @@ def SB_type(i):
 
         imm = "".join(result)
 
-    imm = imm[::-1]
+    imm = imm[::-1] #Check this
     ans = imm[11] + imm[9:3:-1] + rs2 + rs1 + funct3 + imm[3::-1] + imm[10] + opcode
     with open(output_file_path, "a") as file:
         file.write(ans)
         file.write("\n")
     return ans
-
 
 def R_type(ins):
     rd = register_dict[instructions[ins][1]]
@@ -418,9 +401,6 @@ def R_type(ins):
         file.write(ans)
         file.write("\n")
     return ans
-
-
-main(instructions)
 
 
 main(instructions)
