@@ -349,7 +349,7 @@ class Execute:
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = self.decode_result[3] + PC
                 # reg_val[self.decode_result[0]] = reg_val["R0"] + self.decode_result[3]
-            elif self.binary[25:32] == "LOADNOC":
+            elif func == "LOADNOC":
                 self.reg_buffer = self.decode_result[0]
                 self.buf_val = reg_val[self.decode_result[1]] + self.decode_result[3]
         else:
