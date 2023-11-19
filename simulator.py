@@ -1,6 +1,74 @@
 # simulator
 import pdb
 import random
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+clog = open("cache_and_memory_log.txt", "w")
+class LRUCache:
+    def __init__(self, num_sets, memory):
+        self.num_sets = num_sets
+        self.memory = memory
+
+        # Initialize cache as a dictionary of sets, where each set is a list of blocks
+        self.cache = {set_num: {} for set_num in range(num_sets)}
+
+        # Maintain an order list to track the usage of blocks within each set
+        self.order = {set_num: [] for set_num in range(num_sets)}
+
+    def access_memory(self, mem_addr):
+        set_num = mem_addr % self.num_sets
+
+        if mem_addr in self.cache[set_num]:
+            # Block is in the cache, retrieve the value and update LRU order
+            value = self.cache[set_num][mem_addr]
+            self.order[set_num].remove(mem_addr)
+            self.order[set_num].insert(0, mem_addr)
+            print(f"Cache hit! Value at mem_addr {mem_addr}: {value}")
+            clog.write(f"Cache hit! Value at mem_addr {mem_addr}: {value}")
+            clog.write("\n")
+        else:
+            # Block is not in the cache, fetch from memory and store in the cache
+            value = self.memory[mem_addr]
+
+            if len(self.cache[set_num]) == 2:
+                # Cache set is full, evict the LRU block
+                lru_mem_addr = self.order[set_num].pop()
+                del self.cache[set_num][lru_mem_addr]
+
+            # Add the new block to the cache and the front of the order list
+            self.cache[set_num][mem_addr] = value
+            self.order[set_num].insert(0, mem_addr)
+            print(f"Cache miss! Fetched from memory. Value at mem_addr {mem_addr}: {value}")
+            clog.write(f"Cache miss! Fetched from memory. Value at mem_addr {mem_addr}: {value}")
+            clog.write("\n")
+
+        # Print the current state of the cache
+        self.print_cache()
+
+    def print_cache(self):
+        print("Current Cache State:")
+        clog.write("Current Cache State:\n")
+
+        for set_num, blocks in self.cache.items():
+            print(f"Set {set_num}:", blocks)
+            clog.write(f"Set {set_num}:"+ str(blocks)+"\n")
+            clog.write("\n")
+        print()
+
+memory1024 = [random.randint(0, 255) for _ in range(1024)]
+clog.write("\nMemory Contents:\n")
+clog.write("[")
+
+for i in range(len(memory1024)-1):
+    to_write = str(i) + " : " + str(memory1024[i]) + ", "
+    clog.write(to_write)
+clog.write(str(len(memory1024)-1) + " : " + str(memory1024[len(memory1024)-1]) + "]"+"\n")
+
+cache = LRUCache(num_sets=4, memory=memory1024)
+
+
 
 # opcode to function
 opcode_to_func = {
@@ -234,7 +302,7 @@ class Instruction_Memory:
 
 PC = 0
 
-memory1024 = [random.randint(0, 255) for _ in range(1024)]
+# memory1024 = [random.randint(0, 255) for _ in range(1024)]
 memmap_reg = {"1025": 0, "1026": 0, "1027": 0, "1028": 0, "1029": 0}
 
 
@@ -513,18 +581,27 @@ class Memory:
         self.execute_result = E.send_to_memory()
         self.binary = self.execute_result[2]
         opcode = self.binary[25:32]
-      
+
         if opcode == "0100011":
             # store
             mem_addr = self.execute_result[1]
+            for address in cache.cache.keys():
+                for inner_address in cache.cache[address].keys():
+
+                    if inner_address == mem_addr:
+                        cache.cache[address][inner_address] = reg_val[self.execute_result[0]]
+                        cache.print_cache()
+                        # print(mem_addr, cache.cache)
+
             data_to_store = reg_val[self.execute_result[0]]
-    
             memory1024[mem_addr] = data_to_store
-        # check whether writeback or memory stage
+
         elif opcode == "0000011":
-            # load
+            # load  
             mem_addr = self.execute_result[1]
-            reg_val[self.execute_result[0]] = memory1024[mem_addr]
+            reg_val[self.execute_result[0]] = cache.access_memory(mem_addr)
+            # flog.write("Cache hit! Value at mem_addr "+str(mem_addr)+": "+str(cache.cache[mem_addr])+"\n")
+            # flog.write(str(cache.cache))
         elif opcode == "1111111":
        
             mem_addr = self.execute_result[1]
@@ -589,52 +666,99 @@ class Instruction:
         self.Wr = -1
 
     def check_hazard(self,prev_instrction):
+        if(self.binary[25:32]=="0000011" or self.binary[25:32]=="0010011"):
+            if prev_instrction.binary[25:32] == "1100011":
+                prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+                rs1_current = register_dict_rev[self.binary[12:17]]
+                
+                if prev_rd == rs1_current:
+                    return True
+                else:
+                    return False
+            elif prev_instrction.binary[25:32] == "0000011":
+                prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+                rs1_current = register_dict_rev[self.binary[12:17]]
+
+                if prev_rd == rs1_current :
+                    return True
+                else:
+                    return False
+            elif prev_instrction.binary[25:32] == "0100011":
+                prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+                rs1_current = register_dict_rev[self.binary[12:17]]
+                
+                if prev_rd == rs1_current :
+                    return True
+                else: 
+                    return False
+            elif prev_instrction.binary[25:32] == "0010011":
+                prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+                rs1_current = register_dict_rev[self.binary[12:17]]
+                
+                if prev_rd == rs1_current :
+                    return True
+                else:
+                    return False
+            elif prev_instrction.binary[25:32] == "0110011":
+                prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+                rs1_current = register_dict_rev[self.binary[12:17]]
+                
+                if prev_rd == rs1_current :
+                    return True
+                else:
+                    return False
+            else:
+                return False            
+
         
-        if prev_instrction.binary[25:32] == "1100011":
-            prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
-            rs1_current = register_dict_rev[self.binary[12:17]]
-            rs2_current = register_dict_rev[self.binary[7:12]]
-            
-            if prev_rd == rs1_current or prev_rd == rs2_current:
-                return True
-            else:
-                return False
-        elif prev_instrction.binary[25:32] == "0000011":
-            prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
-            rs1_current = register_dict_rev[self.binary[12:17]]
-            
-            if prev_rd == rs1_current:
-                return True
-            else:
-                return False
-        elif prev_instrction.binary[25:32] == "0100011":
-            prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
-            rs1_current = register_dict_rev[self.binary[12:17]]
-            rs2_current = register_dict_rev[self.binary[7:12]]
-            
-            if prev_rd == rs1_current or prev_rd == rs2_current:
-                return True
-            else: 
-                return False
-        elif prev_instrction.binary[25:32] == "0010011":
-            prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
-            rs1_current = register_dict_rev[self.binary[12:17]]
-            
-            if prev_rd == rs1_current:
-                return True
-            else:
-                return False
-        elif prev_instrction.binary[25:32] == "0110011":
-            prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
-            rs1_current = register_dict_rev[self.binary[12:17]]
-            rs2_current = register_dict_rev[self.binary[7:12]]
-            
-            if prev_rd == rs1_current or prev_rd == rs2_current:
-                return True
-            else:
-                return False
         else:
-            return False
+            if prev_instrction.binary[25:32] == "1100011":
+                prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+                rs1_current = register_dict_rev[self.binary[12:17]]
+                rs2_current = register_dict_rev[self.binary[7:12]]
+                
+                if prev_rd == rs1_current or prev_rd == rs2_current:
+                    return True
+                else:
+                    return False
+            elif prev_instrction.binary[25:32] == "0000011":
+                prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+                rs1_current = register_dict_rev[self.binary[12:17]]
+                rs2_current = register_dict_rev[self.binary[7:12]]
+
+                if prev_rd == rs1_current or prev_rd == rs2_current:
+                    return True
+                else:
+                    return False
+            elif prev_instrction.binary[25:32] == "0100011":
+                prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+                rs1_current = register_dict_rev[self.binary[12:17]]
+                rs2_current = register_dict_rev[self.binary[7:12]]
+                
+                if prev_rd == rs1_current or prev_rd == rs2_current:
+                    return True
+                else: 
+                    return False
+            elif prev_instrction.binary[25:32] == "0010011":
+                prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+                rs1_current = register_dict_rev[self.binary[12:17]]
+                rs2_current = register_dict_rev[self.binary[7:12]]
+                
+                if prev_rd == rs1_current or prev_rd == rs2_current:
+                    return True
+                else:
+                    return False
+            elif prev_instrction.binary[25:32] == "0110011":
+                prev_rd = register_dict_rev[prev_instrction.binary[20:25]]
+                rs1_current = register_dict_rev[self.binary[12:17]]
+                rs2_current = register_dict_rev[self.binary[7:12]]
+                
+                if prev_rd == rs1_current or prev_rd == rs2_current:
+                    return True
+                else:
+                    return False
+            else:
+                return False
         # prev_rd = register_dict_rev[prev_instrction.binary[12:17]]
 
         # rs1_current = register_dict_rev[self.binary[20:25]]
@@ -649,8 +773,9 @@ class Instruction:
         # if prev_instruction.F_starting == -1 or prev_instruction.D_starting == -1:
         #     return
         # print("####",prev_instruction.binary,self.binary)
+        
         if Branch_flag == False:
-            
+            # print(self.binary)
             self.F_starting = prev_instruction.D_starting
             self.F_ending = prev_instruction.D_ending
             # if prev_instruction.Ex == -1:
@@ -661,6 +786,7 @@ class Instruction:
                 or prev_instruction.binary[25:] == "0100011"
             ):
                 if self.check_hazard(prev_instruction):
+                    # print(prev_instruction.binary,prev_instruction.Mem)
                     self.D_ending = prev_instruction.Mem
                 else:
                     self.D_ending = prev_instruction.Ex
@@ -670,8 +796,7 @@ class Instruction:
                 return
             else:
                 if self.check_hazard(prev_instruction):
-                    
-                    self.D_ending = prev_instruction.Wr + 1
+                    self.D_ending = prev_instruction.Ex
                 else:
                     self.D_ending = prev_instruction.Ex
             self.Ex = self.D_ending + 1
@@ -687,8 +812,10 @@ class Instruction:
             self.Mem = self.Ex + 1
             self.wr = self.Mem + 1
             return
+        # print(self.binary, self.F_starting, self.F_ending, self.D_starting, self.D_ending, self.Ex, self.Mem, self.Wr)
 
 flog = open("log.txt", "w")
+
 def pipeline_show(instructions):
     temp=""
     for i in range(0, len(instructions)):
@@ -723,6 +850,7 @@ def pipeline_show(instructions):
         str_line += str_W
         print(str_line)
         temp+=str_line
+        # print(cache.cache)
     flog.write(temp+"\n")
 def main():
     
@@ -777,6 +905,7 @@ def main():
     # Pass the list of instruction objects to the pipeline_show function
     pipeline_show(instruction_list)
     branch_imm = 0
+    print(instruction_list[-1].Wr)
     cycles = instruction_list[-1].Wr + 1
     instruction_var = 0
 
@@ -900,6 +1029,87 @@ def main():
         to_write = str(i[0]) + " : " + str(i[1]) + "\n"
         flog.write(to_write)
     flog.close()
+    
+    types = ["Memory", "Register","Memory Mapped Registers"]
+    y_pos = np.arange(len(types))
+    performance = [0, 0, 0]
+    for i in range(len(instruction_list)):
+        if (
+            instruction_list[i].binary[25:32] == "0000011"
+            or instruction_list[i].binary[25:32] == "0100011"
+        ):
+            performance[0] += 1
+        elif instruction_list[i].binary[25:32] == "1111111" or instruction_list[i].binary[25:32] == "0000000":
+            performance[2] += 1
+        else:
+            performance[1] += 1
+    plt.bar(y_pos, performance, align="center", alpha=0.5)
+    plt.xticks(y_pos, types)
+    plt.ylabel("Number of Instructions")
+    plt.title("Types of Instructions")
+    plt.show()
+        # Assuming you have instruction_list and stages defined elsewhere
 
+        # Your existing code
+    stages = ["Fetch", "Decode", "Execute", "Memory", "Writeback", "no stall"]
+    y_pos = np.arange(len(stages))
+    x_axis = [i + 1 for i in range(len(instruction_list))]
+
+        # Initialize a list to store indices of stalls
+    stall_indices = []
+
+        # Update stall_indices based on your conditions
+    for i in range(len(instruction_list)):
+        if instruction_list[i].F_starting != instruction_list[i].F_ending:
+                stall_indices.append((i, 0))
+        elif instruction_list[i].D_starting != instruction_list[i].D_ending:
+                stall_indices.append((i, 1))
+        else:
+            stall_indices.append((i, 5))
+
+        # Plotting
+    for idx, stage_idx in stall_indices:
+        plt.scatter(idx + 1, y_pos[stage_idx] + 1, c='red', marker='o', label=stages[stage_idx])
+
+        # Customize the plot
+    plt.yticks(y_pos + 1, stages)
+    plt.xticks(np.arange(1, len(instruction_list) + 1, 1))  # Set x-axis ticks to integers
+    plt.xlabel('Instructions')
+    plt.ylabel('Stages')
+    plt.title('Pipeline Stalls for Each Instruction')
+
+        # Show the plot
+    plt.show()
+
+    X = [i+1 for i in range(len(instruction_list))]
+    X_axis = np.arange(len(X))
+
+    Y_arr = [0 for i in range(len(instruction_list))]
+    Z_arr = [0 for i in range(len(instruction_list))]
+
+    for i in range(len(instruction_list)):
+        if instruction_list[i].F_starting != instruction_list[i].F_ending:
+                Y_arr[i] = instruction_list[i].F_ending - instruction_list[i].F_starting
+        if instruction_list[i].D_starting != instruction_list[i].D_ending:
+                Z_arr[i] = instruction_list[i].D_ending - instruction_list[i].D_starting
+
+    plt.bar(X_axis - 0.2, Y_arr, 0.4, label="Fetch stall")
+    plt.bar(X_axis + 0.2, Z_arr, 0.4, label="Decode stall")
+
+    plt.xticks(X_axis, X)
+    plt.xlabel("Instructions")
+
+    plt.ylabel("No of stalls")
+    plt.title("Stalls in different instructions")
+    plt.legend()
+    plt.show()
 
 main()
+clog.write("\nMemory Contents:\n")
+clog.write("[")
+
+for i in range(len(memory1024)-1):
+    to_write = str(i) + " : " + str(memory1024[i]) + ", "
+    clog.write(to_write)
+clog.write(str(len(memory1024)-1) + " : " + str(memory1024[len(memory1024)-1]) + "]")
+
