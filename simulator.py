@@ -663,7 +663,7 @@ class Memory:
             # flog.write(str(cache.cache))
         elif opcode == "1111111":
        
-            mem_addr = self.execute_result[1]
+            mem_addr = self.execute_result[1] # reg_val[self.decode_result[1]] + self.decode_result[3]
             if mem_addr >= 1025 and mem_addr <= 1028: 
                 data_to_store = reg_val[self.execute_result[0]]
                 memmap_reg[str(mem_addr)] = data_to_store
@@ -834,6 +834,9 @@ class Instruction:
         # print("####",prev_instruction.binary,self.binary)
         
         if Branch_flag == False:
+            print(self.binary,"here if")
+            # if(self.binary.binary[25:] == "1100011"):
+
             # print(self.binary)
             self.F_starting = prev_instruction.D_starting
             self.F_ending = prev_instruction.D_ending
@@ -846,23 +849,40 @@ class Instruction:
             ):
                 if self.check_hazard(prev_instruction):
                     # print(prev_instruction.binary,prev_instruction.Mem)
-                    self.D_ending = prev_instruction.Mem+1
+                    self.D_ending = prev_instruction.Mem
                 else:
                     self.D_ending = prev_instruction.Ex
+                self.Ex = self.D_ending + 1
+                self.Mem = self.Ex + 1
+                self.Wr = self.Mem + 1
 
-            elif prev_instruction.binary[25:] == "1100011":
-                self.D_ending = self.D_starting
-                return
+            elif prev_instruction.binary[25:] == "1100011" and prev_instruction.binary[17:20]=="000":
+                # if self.check_hazard(prev_instruction):
+                #     self.D_ending = prev_instruction.Mem
+                # else:
+                self.D_ending = prev_instruction.Ex
+                # self.D_ending = self.D_starting
+                # return
+            elif prev_instruction.binary[25:] == "1100011" and prev_instruction.binary[17:20]=="001":
+                if self.check_hazard(prev_instruction):
+                    self.D_ending = prev_instruction.Ex
+                else:
+                    self.D_ending = prev_instruction.Ex
+                self.Ex = self.D_ending + 1
+                self.Mem = self.Ex + 1
+                self.Wr = self.Mem + 1             
+
             else:
                 if self.check_hazard(prev_instruction):
-                    self.D_ending = prev_instruction.Ex+1
+                    self.D_ending = prev_instruction.Ex
                 else:
                     self.D_ending = prev_instruction.Ex
-            self.Ex = self.D_ending + 1
-            self.Mem = self.Ex + 1
-            self.Wr = self.Mem + 1
+                self.Ex = self.D_ending + 1
+                self.Mem = self.Ex + 1
+                self.Wr = self.Mem + 1
 
         else:
+            print("here",self.binary)
             self.F_starting = prev_instruction.Ex + 1
             self.F_ending = self.F_starting
             self.D_starting = self.F_ending + 1
@@ -870,11 +890,10 @@ class Instruction:
             self.Ex = self.D_ending + 1
             self.Mem = self.Ex + 1
             self.wr = self.Mem + 1
-            return
         print(self.binary, self.F_starting, self.F_ending, self.D_starting, self.D_ending, self.Ex, self.Mem, self.Wr)
+        return
 
 flog = open("log.txt", "w")
-
 def pipeline_show(instructions):
     temp=""
     for i in range(0, len(instructions)):
@@ -913,6 +932,7 @@ def pipeline_show(instructions):
     flog.write(temp+"\n")
 
 data_mem_addr={}
+i_mem_addr={}
 def main():
     
     for i in range(len(memory1024)):
@@ -955,7 +975,7 @@ def main():
                 2,
             )
 
-            jump = immediate-1 
+            jump = immediate-1
             prev_PC = PC
         if jump == PC:
             instruction_list[PC].pipeline_implementation(
@@ -967,8 +987,8 @@ def main():
     # Pass the list of instruction objects to the pipeline_show function
     pipeline_show(instruction_list)
     branch_imm = 0
-    print(instruction_list[-1].Wr)
     cycles = instruction_list[-1].Wr + 1
+
     instruction_var = 0
 
    
@@ -977,18 +997,32 @@ def main():
     flog.write("\n")
     branch_pc=0
     PC=0
+    fetch_stall_flag=0
     for i in range(cycles):
+
         if instruction_var >= len(instruction_list):
             break
         curr_instruction = instruction_list[instruction_var]
+
+        if(curr_instruction.binary[25:32]=="1111111"):
+            mem_addr=reg_val[register_dict_rev[curr_instruction.binary[12:17]]]+int(curr_instruction.binary[0:12], 2)
+            if mem_addr >= 1025 and mem_addr <= 1028: 
+                data_mem_addr[curr_instruction.Mem+1]=mem_addr
+        if(curr_instruction.binary[25:32]=="0000000"):
+            data_mem_addr[curr_instruction.Mem+1]=1029
+
         if (
             curr_instruction.binary[25:32] == "0000011"
             or curr_instruction.binary[25:32] == "0100011"
         ): 
-            
-            mem_addr=reg_val[register_dict_rev[curr_instruction.binary[12:17]]]+int(curr_instruction.binary[0:12], 2)
-            data_mem_addr[curr_instruction.Mem+1]=mem_addr
-            print(data_mem_addr)
+            if(curr_instruction.binary[25:32] == "0000011"):
+                mem_addr=reg_val[register_dict_rev[curr_instruction.binary[12:17]]]+int(curr_instruction.binary[0:12], 2)
+                data_mem_addr[curr_instruction.Mem+1]=mem_addr
+                print(mem_addr)
+            if(curr_instruction.binary[25:32] == "0100011"):
+                mem_addr=reg_val[register_dict_rev[curr_instruction.binary[7:12]]]+int(curr_instruction.binary[0:7] + curr_instruction.binary[20:25], 2)
+                print(mem_addr)
+                data_mem_addr[curr_instruction.Mem+1]=mem_addr
             if instruction_var > 0 and curr_instruction.check_hazard(
                 instruction_list[instruction_var - 1]
             ):
@@ -1062,7 +1096,17 @@ def main():
                
                 wb = Writeback()
                 wb.writeback(mem)
+                
                 instruction_var += 1
+        if(curr_instruction.F_starting!=curr_instruction.F_ending) and fetch_stall_flag==0:
+            instruction_var+=1
+            fetch_stall_flag=1
+        elif fetch_stall_flag==1:
+            fetch_stall_flag=0
+        elif(branch_imm!=0):
+            instruction_var=branch_imm-1
+        else:
+            instruction_var+=1
         string = "Clock cycle -" + str(i) + "\n"
         flog.write(string)
         for reg in reg_val:
@@ -1075,6 +1119,9 @@ def main():
         #     flog.write("\n")
         #     branch_pc=0
         # else :
+        print(instruction_var,PC)
+        PC=instruction_var*4
+        i_mem_addr[i]=PC
         flog.write("PC: "+str(instruction_var*4))
         flog.write("\n")
 
@@ -1163,7 +1210,42 @@ def main():
     # plt.ylabel("No of stalls")
     # plt.title("Stalls in different instructions")
     # plt.legend()
+    # plt.grid(True)
     # plt.show()
+
+    keys = list(data_mem_addr.keys())
+    values = list(data_mem_addr.values())
+
+    plt.scatter(keys, values, color='blue', marker='o')
+    plt.xlabel('X-axis Label')
+    plt.ylabel('Y-axis Label')
+    plt.title('Scatter Plot')
+    
+    # Set discrete labels on the x-axis
+    plt.xticks(keys)
+    
+    # Set discrete labels on the y-axis
+    plt.yticks(values)
+
+    plt.grid(True)
+    plt.show()
+
+    keys = list(i_mem_addr.keys())
+    values = list(i_mem_addr.values())
+
+    plt.scatter(keys, values, color='blue', marker='o')
+    plt.xlabel('X-axis Label')
+    plt.ylabel('Y-axis Label')
+    plt.title('Scatter Plot')
+    
+    # Set discrete labels on the x-axis
+    plt.xticks(keys)
+    
+    # Set discrete labels on the y-axis
+    plt.yticks(values)
+
+    plt.grid(True)
+    plt.show()
 
 
 
