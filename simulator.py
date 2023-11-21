@@ -9,19 +9,20 @@ clog = open("cache_and_memory_log.txt", "w")
 
 class BranchPredictor:
     def __init__(self, initial_state='SNT'):
-        # Initialize the 2-bit saturating counter
+
         self.state_order = ['SNT', 'WNT', 'WT', 'ST']
         self.state_index = self.state_order.index(initial_state)
 
-        # Initialize counters for correct and incorrect predictions
         self.correct_predictions = 0
         self.incorrect_predictions = 0
 
     def predict(self, actual_outcome):
-        # Check if the prediction is correct
-        prediction = self.state_index >= 2  # Predict taken if state_index is 2 or 3
+        
+        prediction = self.state_index >= 2  
+        clog.write("\n")
+        print(f"Previous State: ", self.state_order[self.state_index] )
+        clog.write(f"Previous State: {self.state_order[self.state_index]}")
 
-        # Update the counter based on the actual outcome
         if actual_outcome:
             if self.state_index < 3:
                 self.state_index += 1
@@ -29,17 +30,21 @@ class BranchPredictor:
             if self.state_index > 0:
                 self.state_index -= 1
 
-        # Update prediction counters
         if prediction == actual_outcome:
             self.correct_predictions += 1
         else:
             self.incorrect_predictions += 1
 
-        # Print the current state after each prediction
         self.print_current_state()
 
     def print_current_state(self):
+
         current_state = self.state_order[self.state_index]
+        clog.write("\n")
+        clog.write("\n")
+        clog.write(f"Current State: {current_state}")
+        clog.write("\n")
+        clog.write("\n")
         print(f"Current State: {current_state}")
 
     def get_accuracy(self):
@@ -48,61 +53,53 @@ class BranchPredictor:
         return accuracy
 
 branch_predictor = BranchPredictor('SNT')
-# Example usage
 
-# Simulate branch predictions
-# # Assuming actual_outcome is a Boolean value
-# branch_predictor.predict(actual_outcome=True)
-# branch_predictor.predict(actual_outcome=False)
-# branch_predictor.predict(actual_outcome=True)
-# branch_predictor.predict(actual_outcome=False)
-
-# # Get accuracy
-# accuracy = branch_predictor.get_accuracy()
-# print(f"Accuracy: {accuracy:.2f}%")
 
 class LRUCache:
     def __init__(self, num_sets, memory):
         self.num_sets = num_sets
         self.memory = memory
 
-        # Initialize cache as a dictionary of sets, where each set is a list of blocks
+       
         self.cache = {set_num: {} for set_num in range(num_sets)}
 
-        # Maintain an order list to track the usage of blocks within each set
+  
         self.order = {set_num: [] for set_num in range(num_sets)}
 
     def access_memory(self, mem_addr):
         set_num = mem_addr % self.num_sets
 
         if mem_addr in self.cache[set_num]:
-            # Block is in the cache, retrieve the value and update LRU order
+   
             value = self.cache[set_num][mem_addr]
             self.order[set_num].remove(mem_addr)
             self.order[set_num].insert(0, mem_addr)
+            clog.write("\n")
             print(f"Cache hit! Value at mem_addr {mem_addr}: {value}")
+            clog.write("\n")
             clog.write(f"Cache hit! Value at mem_addr {mem_addr}: {value}")
             clog.write("\n")
             return value
         else:
-            # Block is not in the cache, fetch from memory and store in the cache
+            
             value = self.memory[mem_addr]
 
             if len(self.cache[set_num]) == 2:
-                # Cache set is full, evict the LRU block
+
                 lru_mem_addr = self.order[set_num].pop()
                 del self.cache[set_num][lru_mem_addr]
 
-            # Add the new block to the cache and the front of the order list
+
             self.cache[set_num][mem_addr] = value
             self.order[set_num].insert(0, mem_addr)
             print(f"Cache miss! Fetched from memory. Value at mem_addr {mem_addr}: {value}")
+
+            clog.write("\n")
             clog.write(f"Cache miss! Fetched from memory. Value at mem_addr {mem_addr}: {value}")
             clog.write("\n")
             return value
         
-        # Print the current state of the cache
-        self.print_cache()
+
 
     def print_cache(self):
         print("Current Cache State:")
@@ -657,8 +654,7 @@ class Memory:
             # load  
             mem_addr = self.execute_result[1]
             reg_val[self.execute_result[0]] = cache.access_memory(mem_addr)
-            print(mem_addr)
-            print(reg_val[self.execute_result[0]])
+
             # flog.write("Cache hit! Value at mem_addr "+str(mem_addr)+": "+str(cache.cache[mem_addr])+"\n")
             # flog.write(str(cache.cache))
         elif opcode == "1111111":
@@ -834,7 +830,6 @@ class Instruction:
         # print("####",prev_instruction.binary,self.binary)
         
         if Branch_flag == False:
-            print(self.binary,"here if")
             # if(self.binary.binary[25:] == "1100011"):
 
             # print(self.binary)
@@ -847,6 +842,7 @@ class Instruction:
                 prev_instruction.binary[25:] == "0000011"
                 or prev_instruction.binary[25:] == "0100011"
             ):
+
                 if self.check_hazard(prev_instruction):
                     # print(prev_instruction.binary,prev_instruction.Mem)
                     self.D_ending = prev_instruction.Mem
@@ -882,15 +878,15 @@ class Instruction:
                 self.Wr = self.Mem + 1
 
         else:
-            print("here",self.binary)
-            self.F_starting = prev_instruction.Ex + 1
+
+            self.F_starting = prev_instruction.Ex+1
             self.F_ending = self.F_starting
             self.D_starting = self.F_ending + 1
             self.D_ending = self.D_starting
             self.Ex = self.D_ending + 1
             self.Mem = self.Ex + 1
             self.wr = self.Mem + 1
-        print(self.binary, self.F_starting, self.F_ending, self.D_starting, self.D_ending, self.Ex, self.Mem, self.Wr)
+        #print(self.binary, self.F_starting, self.F_ending, self.D_starting, self.D_ending, self.Ex, self.Mem, self.Wr)
         return
 
 flog = open("log.txt", "w")
@@ -966,7 +962,7 @@ def main():
     prev_PC = -1
     
     for PC in range(1, num_instruction):
-        if instructions[PC][25:] == "1100011":
+        if instructions[PC][25:] == "1100011" and instructions[PC][17:20] == "000":
             immediate = int(
                 instructions[PC][0]
                 + instructions[PC][24]
@@ -991,19 +987,25 @@ def main():
 
     instruction_var = 0
 
-   
+    bflag=0
     flog.write("Number of cycles : "+str(cycles))
     flog.write("\n")
     flog.write("\n")
     branch_pc=0
     PC=0
     fetch_stall_flag=0
+    i=0
+    temp=0
+    getpc=0
     for i in range(cycles):
-
+        # print(i,instruction_var,getpc)
         if instruction_var >= len(instruction_list):
             break
+        if(i<temp):
+            continue
         curr_instruction = instruction_list[instruction_var]
-
+        # print(i,curr_instruction.binary,branch_imm)
+        # print(curr_instruction.binary,instruction_var)
         if(curr_instruction.binary[25:32]=="1111111"):
             mem_addr=reg_val[register_dict_rev[curr_instruction.binary[12:17]]]+int(curr_instruction.binary[0:12], 2)
             if mem_addr >= 1025 and mem_addr <= 1028: 
@@ -1018,10 +1020,10 @@ def main():
             if(curr_instruction.binary[25:32] == "0000011"):
                 mem_addr=reg_val[register_dict_rev[curr_instruction.binary[12:17]]]+int(curr_instruction.binary[0:12], 2)
                 data_mem_addr[curr_instruction.Mem+1]=mem_addr
-                print(mem_addr)
+
             if(curr_instruction.binary[25:32] == "0100011"):
                 mem_addr=reg_val[register_dict_rev[curr_instruction.binary[7:12]]]+int(curr_instruction.binary[0:7] + curr_instruction.binary[20:25], 2)
-                print(mem_addr)
+
                 data_mem_addr[curr_instruction.Mem+1]=mem_addr
             if instruction_var > 0 and curr_instruction.check_hazard(
                 instruction_list[instruction_var - 1]
@@ -1031,8 +1033,9 @@ def main():
                 flag = curr_instruction.Ex
 
         elif curr_instruction.binary[25:32] == "1100011":
-            if curr_instruction.binary[17:20]=="000":
+            if curr_instruction.binary[17:20]=="000" and bflag==0:
                 if(reg_val[register_dict_rev[curr_instruction.binary[12:17]]]==reg_val[register_dict_rev[curr_instruction.binary[7:12]]]):
+                    bflag=1
                     immediate = int(
                         curr_instruction.binary[0]
                         + curr_instruction.binary[24]
@@ -1045,6 +1048,7 @@ def main():
                     
                     flag = curr_instruction.Ex
                 else:
+                    flag = curr_instruction.Ex
                     branch_predictor.predict(actual_outcome=False)
                     
             elif curr_instruction.binary[17:20]=="001":
@@ -1062,14 +1066,22 @@ def main():
                     
                     flag = curr_instruction.Ex
                 else:
+                    flag = curr_instruction.Ex
                     branch_predictor.predict(actual_outcome=False)
             
         else:
             flag = curr_instruction.Ex
-        
+        PC=getpc*4
+        i_mem_addr[i]=PC
+        flog.write("PC: "+str(instruction_var*4))
+        flog.write("\n")
+
+        flog.write("\n")
+        # print(flag,i,curr_instruction.binary,branch_imm)
         if flag == i:
 
             if branch_imm != 0:
+                # print("!!!!!!!!!!!!!!!!")
                 f = Fetch(instruct_mem)
                 f.fetch(instruction_var)
                 dec = Decode(instruct_mem, reg_val)
@@ -1083,6 +1095,7 @@ def main():
                 wb = Writeback()
                 wb.writeback(mem)
                 instruction_var = branch_imm-1
+                getpc = branch_imm-1
                 branch_imm = 0
             else:
                 f = Fetch(instruct_mem)
@@ -1098,36 +1111,58 @@ def main():
                 wb.writeback(mem)
                 
                 instruction_var += 1
-        if(curr_instruction.F_starting!=curr_instruction.F_ending) and fetch_stall_flag==0:
-            instruction_var+=1
+                # getpc += 1
+
+        if getpc<num_instruction and (instruction_list[getpc].F_starting!=instruction_list[getpc].F_ending) and fetch_stall_flag==0:
+
+            # instruction_var+=1
             fetch_stall_flag=1
         elif fetch_stall_flag==1:
-            fetch_stall_flag=0
-        elif(branch_imm!=0):
-            instruction_var=branch_imm-1
-        else:
             instruction_var+=1
+            getpc+=1
+            fetch_stall_flag=0
+        elif(getpc<num_instruction and instruction_list[getpc].binary[25:32] == "1100011" and instruction_list[getpc].binary[17:20]=="000"):
+            temp=i
+            if(getpc<num_instruction):
+                while(temp<instruction_list[getpc].Ex+1):
+                    PC=getpc*4
+                    i_mem_addr[temp]=PC
+                    flog.write("PC: "+str(instruction_var*4))
+                    # print(i_mem_addr)
+                    flog.write("\n")
+                    temp+=1
+                immediate = int(
+                        instruction_list[getpc].binary[0]
+                        + instruction_list[getpc].binary[24]
+                        + instruction_list[getpc].binary[1:7]
+                        + instruction_list[getpc].binary[20:24],
+                        2,
+                    )                
+                # temp=curr_instruction.Ex
+                # i=count
+                # print(cycles)
+                instruction_var=immediate-1
+                # getpc=branch_imm-1
+                # branch_imm=0
+                getpc=immediate-1
+
+        elif (i<=num_instruction+1):
+            getpc+=1
         string = "Clock cycle -" + str(i) + "\n"
+   
         flog.write(string)
         for reg in reg_val:
             to_write = str(reg) + " : " + str(reg_val[reg]) + "\n"
             flog.write(to_write)
         
-        
-        # if(branch_pc!=0): 
-        #     flog.write("PC: "+str(branch_pc*4))
-        #     flog.write("\n")
-        #     branch_pc=0
-        # else :
-        print(instruction_var,PC)
-        PC=instruction_var*4
-        i_mem_addr[i]=PC
-        flog.write("PC: "+str(instruction_var*4))
-        flog.write("\n")
+ 
 
-        flog.write("\n")
+    PC=getpc*4
+    i_mem_addr[i]=PC
+    flog.write("PC: "+str(instruction_var*4))
+    print("Inst. Memory Access:",i_mem_addr)
 
-
+    flog.write("\n")
     for i in range(len(memory1024)):
         to_write = str(i) + " : " + str(memory1024[i]) + "\n"
         flog.write(to_write)
@@ -1138,93 +1173,90 @@ def main():
         flog.write(to_write)
     flog.close()
     
-    # types = ["Memory", "Register","Memory Mapped Registers"]
-    # y_pos = np.arange(len(types))
-    # performance = [0, 0, 0]
-    # for i in range(len(instruction_list)):
-    #     if (
-    #         instruction_list[i].binary[25:32] == "0000011"
-    #         or instruction_list[i].binary[25:32] == "0100011"
-    #     ):
-    #         performance[0] += 1
-    #     elif instruction_list[i].binary[25:32] == "1111111" or instruction_list[i].binary[25:32] == "0000000":
-    #         performance[2] += 1
-    #     else:
-    #         performance[1] += 1
-    # plt.bar(y_pos, performance, align="center", alpha=0.5)
-    # plt.xticks(y_pos, types)
-    # plt.ylabel("Number of Instructions")
-    # plt.title("Types of Instructions")
-    # plt.show()
-    #     # Assuming you have instruction_list and stages defined elsewhere
+    types = ["Memory", "Register","Memory Mapped Registers"]
+    y_pos = np.arange(len(types))
+    performance = [0, 0, 0]
+    for i in range(len(instruction_list)):
+        if (
+            instruction_list[i].binary[25:32] == "0000011"
+            or instruction_list[i].binary[25:32] == "0100011"
+        ):
+            performance[0] += 1
+        elif instruction_list[i].binary[25:32] == "1111111" or instruction_list[i].binary[25:32] == "0000000":
+            performance[2] += 1
+        else:
+            performance[1] += 1
+    plt.bar(y_pos, performance, align="center", alpha=0.5)
+    plt.xticks(y_pos, types)
+    plt.ylabel("Number of Instructions")
+    plt.title("Types of Instructions")
+    plt.show()
+        
+    stages = ["Fetch", "Decode", "Execute", "Memory", "Writeback", "no stall"]
+    y_pos = np.arange(len(stages))
+    x_axis = [i + 1 for i in range(len(instruction_list))]
 
-    #     # Your existing code
-    # stages = ["Fetch", "Decode", "Execute", "Memory", "Writeback", "no stall"]
-    # y_pos = np.arange(len(stages))
-    # x_axis = [i + 1 for i in range(len(instruction_list))]
+    stall_indices = []
 
-    #     # Initialize a list to store indices of stalls
-    # stall_indices = []
 
-    #     # Update stall_indices based on your conditions
-    # for i in range(len(instruction_list)):
-    #     if instruction_list[i].F_starting != instruction_list[i].F_ending:
-    #             stall_indices.append((i, 0))
-    #     elif instruction_list[i].D_starting != instruction_list[i].D_ending:
-    #             stall_indices.append((i, 1))
-    #     else:
-    #         stall_indices.append((i, 5))
+    for i in range(len(instruction_list)):
+        if instruction_list[i].F_starting != instruction_list[i].F_ending:
+                stall_indices.append((i, 0))
+        elif instruction_list[i].D_starting != instruction_list[i].D_ending:
+                stall_indices.append((i, 1))
+        else:
+            stall_indices.append((i, 5))
 
-    #     # Plotting
-    # for idx, stage_idx in stall_indices:
-    #     plt.scatter(idx + 1, y_pos[stage_idx] + 1, c='red', marker='o', label=stages[stage_idx])
+        # Plotting
+    for idx, stage_idx in stall_indices:
+        plt.scatter(idx + 1, y_pos[stage_idx] + 1, c='red', marker='o', label=stages[stage_idx])
 
-    #     # Customize the plot
-    # plt.yticks(y_pos + 1, stages)
-    # plt.xticks(np.arange(1, len(instruction_list) + 1, 1))  # Set x-axis ticks to integers
-    # plt.xlabel('Instructions')
-    # plt.ylabel('Stages')
-    # plt.title('Pipeline Stalls for Each Instruction')
 
-    #     # Show the plot
-    # plt.show()
+    plt.yticks(y_pos + 1, stages)
+    plt.xticks(np.arange(1, len(instruction_list) + 1, 1))  
+    plt.xlabel('Instructions')
+    plt.ylabel('Stages')
+    plt.title('Pipeline Stalls for Each Instruction')
 
-    # X = [i+1 for i in range(len(instruction_list))]
-    # X_axis = np.arange(len(X))
+        # Show the plot
+    plt.show()
 
-    # Y_arr = [0 for i in range(len(instruction_list))]
-    # Z_arr = [0 for i in range(len(instruction_list))]
+    X = [i+1 for i in range(len(instruction_list))]
+    X_axis = np.arange(len(X))
 
-    # for i in range(len(instruction_list)):
-    #     if instruction_list[i].F_starting != instruction_list[i].F_ending:
-    #             Y_arr[i] = instruction_list[i].F_ending - instruction_list[i].F_starting
-    #     if instruction_list[i].D_starting != instruction_list[i].D_ending:
-    #             Z_arr[i] = instruction_list[i].D_ending - instruction_list[i].D_starting
+    Y_arr = [0 for i in range(len(instruction_list))]
+    Z_arr = [0 for i in range(len(instruction_list))]
 
-    # plt.bar(X_axis - 0.2, Y_arr, 0.4, label="Fetch stall")
-    # plt.bar(X_axis + 0.2, Z_arr, 0.4, label="Decode stall")
+    for i in range(len(instruction_list)):
+        if instruction_list[i].F_starting != instruction_list[i].F_ending:
+                Y_arr[i] = instruction_list[i].F_ending - instruction_list[i].F_starting
+        if instruction_list[i].D_starting != instruction_list[i].D_ending:
+                Z_arr[i] = instruction_list[i].D_ending - instruction_list[i].D_starting
 
-    # plt.xticks(X_axis, X)
-    # plt.xlabel("Instructions")
+    plt.bar(X_axis - 0.2, Y_arr, 0.4, label="Fetch stall")
+    plt.bar(X_axis + 0.2, Z_arr, 0.4, label="Decode stall")
 
-    # plt.ylabel("No of stalls")
-    # plt.title("Stalls in different instructions")
-    # plt.legend()
-    # plt.grid(True)
-    # plt.show()
+    plt.xticks(X_axis, X)
+    plt.xlabel("Instructions")
+
+    plt.ylabel("No of stalls")
+    plt.title("Stalls in different instructions")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
     keys = list(data_mem_addr.keys())
     values = list(data_mem_addr.values())
 
     plt.scatter(keys, values, color='blue', marker='o')
-    plt.xlabel('X-axis Label')
-    plt.ylabel('Y-axis Label')
-    plt.title('Scatter Plot')
+    plt.xlabel('Cycle No.')
+    plt.ylabel('Data Memory Address')
+    plt.title('Data Memory Access')
     
-    # Set discrete labels on the x-axis
+ 
     plt.xticks(keys)
     
-    # Set discrete labels on the y-axis
+   
     plt.yticks(values)
 
     plt.grid(True)
@@ -1234,14 +1266,13 @@ def main():
     values = list(i_mem_addr.values())
 
     plt.scatter(keys, values, color='blue', marker='o')
-    plt.xlabel('X-axis Label')
-    plt.ylabel('Y-axis Label')
-    plt.title('Scatter Plot')
-    
-    # Set discrete labels on the x-axis
+    plt.xlabel('Cycle No.')
+    plt.ylabel('Instruction Memory Address')
+    plt.title('Instruction Memory Access')
+
     plt.xticks(keys)
     
-    # Set discrete labels on the y-axis
+
     plt.yticks(values)
 
     plt.grid(True)
@@ -1250,13 +1281,23 @@ def main():
 
 
 main()
+clog.write("\n")
+clog.write("Final Cache State:")
+clog.write("\n")
+
+for key, value in cache.cache.items():
+    clog.write(f'{key}: {value}\n')
+clog.write("\n")
+print("Accuracy "+str(branch_predictor.get_accuracy()))
+clog.write("Accuracy "+str(branch_predictor.get_accuracy()))
+clog.write("\n")
+clog.write("\n")
 clog.write("\nMemory Contents:\n")
 clog.write("[")
-
 for i in range(len(memory1024)-1):
     to_write = str(i) + " : " + str(memory1024[i]) + ", "
     clog.write(to_write)
 clog.write(str(len(memory1024)-1) + " : " + str(memory1024[len(memory1024)-1]) + "]")
 
-print(data_mem_addr)
+print("Data Memory Access: ",data_mem_addr)
 
